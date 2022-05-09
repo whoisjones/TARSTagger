@@ -34,6 +34,9 @@ def compute_metrics(eval_pred):
     return {"classification_report": classification_report(y_true, y_pred),
             "f1": f1_score(y_true, y_pred)}
 
+def get_f1_score(trainer, dataset):
+    return trainer.predict(dataset).metrics["test_f1"]
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="xlm-roberta-large")
@@ -63,6 +66,7 @@ if __name__ == "__main__":
 
     logging_steps = len(tokenized_dataset["train"]) // args.batch_size
 
+    path = "resouces/tars/run1/"
     training_arguments = TrainingArguments(
         output_dir="resouces/tars/run1",
         evaluation_strategy="epoch",
@@ -86,5 +90,7 @@ if __name__ == "__main__":
 
     trainer.train()
 
-    trainer.predict(tokenized_dataset["test"])
+    trainer.save_model(f"{path}/final")
+
+    print(get_f1_score(trainer, tokenized_dataset["test"]))
 
