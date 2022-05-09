@@ -1,8 +1,12 @@
 import argparse
+import logging
 
+import transformers
 from transformers import AutoConfig, AutoTokenizer
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
+
+import datasets
 from datasets import load_dataset
 
 import torch
@@ -11,6 +15,9 @@ from seqeval.metrics import classification_report, f1_score
 
 from model import TARSTagger
 from data import tokenize_and_align_labels
+
+logger = logging.getLogger(__name__)
+
 
 def align_predictions(predictions, label_ids):
     preds = np.argmax(predictions, axis=2)
@@ -37,15 +44,21 @@ def compute_metrics(eval_pred):
 def get_f1_score(trainer, dataset):
     return trainer.predict(dataset).metrics["test_f1"]
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="xlm-roberta-large")
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--existing_model_path", type=str, default=None)
 
     args = parser.parse_args()
+
+    log_level = logging.INFO
+    logger.setLevel(log_level)
+    datasets.utils.logging.set_verbosity(log_level)
+    transformers.utils.logging.set_verbosity(log_level)
+    transformers.utils.logging.enable_default_handler()
+    transformers.utils.logging.enable_explicit_format()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -92,5 +105,5 @@ if __name__ == "__main__":
 
     trainer.save_model(f"{path}/final")
 
-    print(get_f1_score(trainer, tokenized_dataset["test"]))
-
+if __name__ == "__main__":
+    main()
