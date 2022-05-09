@@ -15,7 +15,7 @@ from data import tokenize_and_align_labels
 def align_predictions(predictions, label_ids):
     preds = np.argmax(predictions, axis=2)
     batch_size, seq_len = preds.shape
-    labels_list = preds_list = [], []
+    labels_list, preds_list = [], []
 
     for batch_idx in range(batch_size):
         example_labels, example_preds = [], []
@@ -61,6 +61,8 @@ if __name__ == "__main__":
     tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True,
                                     remove_columns=["tokens", "pos_tags", "chunk_tags", "ner_tags"])
 
+    logging_steps = len(tokenized_dataset["train"]) // args.batch_size
+
     training_arguments = TrainingArguments(
         output_dir="resouces/tars/run1",
         evaluation_strategy="epoch",
@@ -68,6 +70,7 @@ if __name__ == "__main__":
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         num_train_epochs=args.epochs,
+        logging_steps=logging_steps,
         weight_decay=0.01
     )
 
