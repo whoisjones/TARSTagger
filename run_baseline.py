@@ -1,6 +1,6 @@
 import argparse
 
-from transformers import AutoConfig, AutoTokenizer, AutoModel
+from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassification
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
@@ -35,7 +35,7 @@ def main():
     config = AutoConfig.from_pretrained(args.model, num_labels=tags.num_classes,
                                         id2label=index2tag, label2id=tag2index)
 
-    model = AutoModel.from_pretrained(args.model, config=config).to(device)
+    model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
