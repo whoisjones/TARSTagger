@@ -1,5 +1,6 @@
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
+from run import index2tag
 
 def align_predictions(predictions, label_ids):
     preds = np.argmax(predictions, axis=2)

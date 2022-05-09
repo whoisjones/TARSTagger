@@ -59,3 +59,5 @@ if __name__ == "__main__":
 
     trainer.train()
 
+    trainer.predict(tokenized_dataset["test"])
+
