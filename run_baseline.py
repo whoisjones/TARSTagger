@@ -98,10 +98,9 @@ def main():
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
-    predictions, labels, metrics = trainer.predict(dataset["test"], metric_key_prefix="predict")
+    predictions, labels, metrics = trainer.predict(tokenized_dataset["test"], metric_key_prefix="predict")
     trainer.log_metrics("predict", metrics)
     trainer.save_metrics("predict", metrics)
-
 
 if __name__ == "__main__":
     main()
