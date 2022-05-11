@@ -48,20 +48,17 @@ def main():
     train_dataset = make_tars_dataset(dataset=train_dataset,
                                       tokenizer=tokenizer,
                                       tag2tars=tag2tars,
-                                      tars_head=tars_head,
-                                      num_negatives=1)
+                                      tars_head=tars_head)
 
     val_dataset = make_tars_dataset(dataset=val_dataset,
                                     tokenizer=tokenizer,
                                     tag2tars=tag2tars,
-                                    tars_head=tars_head,
-                                    num_negatives=1)
+                                    tars_head=tars_head)
 
     test_dataset = make_tars_dataset(dataset=test_dataset,
                                      tokenizer=tokenizer,
                                      tag2tars=tag2tars,
-                                     tars_head=tars_head,
-                                     num_negatives=len(tars_head))
+                                     tars_head=tars_head)
 
     index2tag = {v: k for k, v in tars_head.items()}
 

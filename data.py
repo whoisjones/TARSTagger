@@ -22,7 +22,7 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head, num_negatives):
+def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
 
     original_tags = dataset.features["ner_tags"].feature
     index2tag = {idx: tag for idx, tag in enumerate(original_tags.names)}
@@ -75,10 +75,8 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head, num_negatives):
                 tars_formatted_tags.append(filtered_tars_tags)
 
             negative_samples = list(all_tars_labels.symmetric_difference(set(tars_labels)))
-            if num_negatives > len(negative_samples):
-                num_negatives = len(negative_samples)
             if len(negative_samples) > 0:
-                negative_label = random.sample(negative_samples, num_negatives).pop()
+                negative_label = random.sample(negative_samples, 1).pop()
                 tars_tokens = negative_label.split() + [tokenizer.sep_token] + original_tokens
                 filtered_tars_tags = [tars_head.get(tars_tag) for tars_tag in ["O"] * len(tars_tokens)]
 
@@ -87,7 +85,7 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head, num_negatives):
 
         return {"tokens": tars_formatted_tokens, "tags": tars_formatted_tags}
 
-    dataset = dataset.map(lambda p: tars_format(p, num_negatives=num_negatives), batched=True, remove_columns=dataset.column_names)
+    dataset = dataset.map(tars_format, batched=True, remove_columns=dataset.column_names)
 
     dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True, remove_columns=["tokens", "tags"])
 
