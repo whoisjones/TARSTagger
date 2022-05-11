@@ -1,4 +1,5 @@
 import argparse
+import random
 
 from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassification
 from transformers import Trainer, TrainingArguments
@@ -10,7 +11,7 @@ import torch
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
-from data import tokenize_and_align_labels
+from data import tokenize_and_align_labels, make_tars_dataset
 
 
 def main():
@@ -26,21 +27,49 @@ def main():
     # set cuda device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+    # tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
+
     # load dataset
     dataset = load_dataset("conll2003")
-    tags = dataset["train"].features["ner_tags"].feature
-    index2tag = {idx: tag for idx, tag in enumerate(tags.names)}
-    tag2index = {tag: idx for idx, tag in enumerate(tags.names)}
 
-    config = AutoConfig.from_pretrained(args.model, num_labels=tags.num_classes,
-                                        id2label=index2tag, label2id=tag2index)
+    if "train" in dataset:
+        train_dataset = dataset["train"]
+    if "validation" in dataset:
+        val_dataset = dataset["train"]
+    if "test" in dataset:
+        test_dataset = dataset["test"]
+
+    tag2tars = {"O": "O", "B-PER": "person", "I-PER": "person", "B-ORG": "organization", "I-ORG": "organization",
+                "B-LOC": "location", "I-LOC": "location", "B-MISC": "miscellaneous",
+                "I-MISC": "miscellaneous"}
+    tars_head = {'O': 0, 'B-': 1, 'I-': 2}
+
+    train_dataset = make_tars_dataset(dataset=train_dataset,
+                                      tokenizer=tokenizer,
+                                      tag2tars=tag2tars,
+                                      tars_head=tars_head,
+                                      num_negatives=1)
+
+    val_dataset = make_tars_dataset(dataset=val_dataset,
+                                    tokenizer=tokenizer,
+                                    tag2tars=tag2tars,
+                                    tars_head=tars_head,
+                                    num_negatives=1)
+
+    test_dataset = make_tars_dataset(dataset=test_dataset,
+                                     tokenizer=tokenizer,
+                                     tag2tars=tag2tars,
+                                     tars_head=tars_head,
+                                     num_negatives=len(tars_head))
+
+    index2tag = {v: k for k, v in tars_head.items()}
+
+    config = AutoConfig.from_pretrained(args.model, num_labels=len(tars_head),
+                                        id2label=index2tag, label2id=tars_head)
 
     model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
-
-    tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True,
-                                    remove_columns=["tokens", "pos_tags", "chunk_tags", "ner_tags"])
 
     training_arguments = TrainingArguments(
         output_dir=args.output_dir,
@@ -77,8 +106,8 @@ def main():
     trainer = Trainer(
         model=model,
         args=training_arguments,
-        train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["validation"],
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
         tokenizer=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics
@@ -88,17 +117,17 @@ def main():
     metrics = train_result.metrics
     trainer.save_model()
 
-    metrics["train_samples"] = len(dataset["train"])
+    metrics["train_samples"] = len(train_dataset)
     trainer.log_metrics("train", metrics)
     trainer.save_metrics("train", metrics)
     trainer.save_state()
 
     metrics = trainer.evaluate()
-    metrics["eval_samples"] = len(dataset["validation"])
+    metrics["eval_samples"] = len(val_dataset)
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
-    predictions, labels, metrics = trainer.predict(dataset["test"], metric_key_prefix="predict")
+    predictions, labels, metrics = trainer.predict(test_dataset, metric_key_prefix="predict")
     trainer.log_metrics("predict", metrics)
     trainer.save_metrics("predict", metrics)
 
