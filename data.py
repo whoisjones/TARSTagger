@@ -75,6 +75,8 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head, num_negatives):
                 tars_formatted_tags.append(filtered_tars_tags)
 
             negative_samples = list(all_tars_labels.symmetric_difference(set(tars_labels)))
+            if num_negatives > len(negative_samples):
+                num_negatives = len(negative_samples)
             if len(negative_samples) > 0:
                 negative_label = random.sample(negative_samples, num_negatives).pop()
                 tars_tokens = negative_label.split() + [tokenizer.sep_token] + original_tokens
