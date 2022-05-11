@@ -41,7 +41,7 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
 
     dataset = dataset.map(tars_labels)
 
-    def tars_format(examples, num_negatives):
+    def tars_format(examples):
 
         all_tars_labels = set(tag2tars.values())
         all_tars_labels.remove("O")
