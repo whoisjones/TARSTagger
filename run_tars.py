@@ -1,7 +1,7 @@
 import argparse
 import random
 
-from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassification
+from transformers import AutoConfig, AutoTokenizer
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
@@ -11,7 +11,8 @@ import torch
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
-from data import tokenize_and_align_labels, make_tars_dataset
+from data import make_tars_dataset
+from model import TARSTagger
 
 
 def main():
@@ -65,7 +66,7 @@ def main():
     config = AutoConfig.from_pretrained(args.model, num_labels=len(tars_head),
                                         id2label=index2tag, label2id=tars_head)
 
-    model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
+    model = TARSTagger.from_pretrained(args.model, config=config).to(device)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     training_arguments = TrainingArguments(

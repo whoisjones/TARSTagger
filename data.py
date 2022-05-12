@@ -4,7 +4,7 @@ def tokenize_and_align_labels(examples, tokenizer):
     tokenized_inputs = tokenizer(examples["tokens"], truncation=True, is_split_into_words=True)
 
     labels = []
-    for i, label in enumerate(examples[f"tags"]):
+    for i, label in enumerate(examples[f"tars_tags"]):
         word_ids = tokenized_inputs.word_ids(batch_index=i)  # Map tokens to their respective word.
         previous_word_idx = None
         label_ids = []
@@ -46,10 +46,12 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
         all_tars_labels = set(tag2tars.values())
         all_tars_labels.remove("O")
 
-        tars_formatted_tokens = []
-        tars_formatted_tags = []
+        output_tars_formatted_tokens = []
+        output_tars_formatted_tags = []
+        output_original_tags = []
+        output_ids = []
 
-        for original_tokens, original_tags, tars_labels in zip(examples["tokens"], examples["ner_tags"], examples["tars_labels"]):
+        for idx, original_tokens, original_tags, tars_labels in zip(examples["id"], examples["tokens"], examples["ner_tags"], examples["tars_labels"]):
 
             original_bio_tags = [index2tag.get(x) for x in original_tags]
             original_tags_as_tars_labels = [tag2tars.get(index2tag.get(x)) for x in original_tags]
@@ -71,8 +73,10 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
                                      [tars_head.get(tars_tag) if filter_prefix(positive_label, tars_prefix) else tars_head.get("O")
                                       for tars_tag, tars_prefix in zip(tars_tags, original_tags_as_tars_labels)]
 
-                tars_formatted_tokens.append(tars_tokens)
-                tars_formatted_tags.append(filtered_tars_tags)
+                output_ids.append(idx)
+                output_original_tags.append(original_tags)
+                output_tars_formatted_tokens.append(tars_tokens)
+                output_tars_formatted_tags.append(filtered_tars_tags)
 
             negative_samples = list(all_tars_labels.symmetric_difference(set(tars_labels)))
             if len(negative_samples) > 0:
@@ -80,13 +84,20 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
                 tars_tokens = negative_label.split() + [tokenizer.sep_token] + original_tokens
                 filtered_tars_tags = [tars_head.get(tars_tag) for tars_tag in ["O"] * len(tars_tokens)]
 
-                tars_formatted_tokens.append(tars_tokens)
-                tars_formatted_tags.append(filtered_tars_tags)
+                output_ids.append(idx)
+                output_original_tags.append(original_tags)
+                output_tars_formatted_tokens.append(tars_tokens)
+                output_tars_formatted_tags.append(filtered_tars_tags)
 
-        return {"tokens": tars_formatted_tokens, "tags": tars_formatted_tags}
+        return {
+            "id": output_ids,
+            "tokens": output_tars_formatted_tokens,
+            "tars_tags": output_tars_formatted_tags,
+            "ner_tags": output_original_tags
+        }
 
     dataset = dataset.map(tars_format, batched=True, remove_columns=dataset.column_names)
 
-    dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True, remove_columns=["tokens", "tags"])
+    dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True, remove_columns=["tokens"])
 
     return dataset
