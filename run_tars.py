@@ -14,6 +14,9 @@ from seqeval.metrics import classification_report, f1_score
 
 from data import make_tars_dataset
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 def main(args):
     # set cuda device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -25,11 +28,11 @@ def main(args):
     dataset = load_dataset("conll2003")
 
     if "train" in dataset:
-        train_dataset = load_dataset("conll2003", split="train[:200]")
+        train_dataset = load_dataset("conll2003", split="train[:4]")
     if "validation" in dataset:
-        val_dataset = dataset["validation"]
+        val_dataset = load_dataset("conll2003", split="train[:4]")
     if "test" in dataset:
-        test_dataset = dataset["test"]
+        test_dataset = load_dataset("conll2003", split="train[:4]")
 
     original_tags = train_dataset.features["ner_tags"].feature
     original_index2original_tag = {idx: tag for idx, tag in enumerate(original_tags.names)}
@@ -166,15 +169,32 @@ def main(args):
     for idx, tars_predictions in df:
         logits_per_tars_label = torch.stack(tars_predictions["logits"].to_list()).cpu().detach().numpy()
         pred_tars_labels = np.argmax(logits_per_tars_label, axis=2)
-        most_prob_row_indices = np.argmax(np.max(logits_per_tars_label, axis=2), axis=0)
+        score_tars_label = np.max(logits_per_tars_label, axis=2)
         current_preds = []
-        for col_idx, row_idx in enumerate(most_prob_row_indices):
-            current_preds.append(
-                to_original_tag(
-                    tars_tag=pred_tars_labels[row_idx, col_idx],
-                    tars_label=tars_predictions["tars_labels"].iloc[row_idx]
+        for col_idx in range(pred_tars_labels.shape[1]):
+            if not pred_tars_labels[:, col_idx].any():
+                current_preds.append(
+                    to_original_tag(
+                        tars_tag=0,
+                        tars_label=tars_predictions["tars_labels"].iloc[0]
+                    )
                 )
-            )
+            else:
+                nonzero_entries = np.nonzero(pred_tars_labels[:, col_idx])
+                if nonzero_entries[0].shape[0] == 1:
+                    tars_tag = pred_tars_labels[:, col_idx][nonzero_entries][0]
+                    tars_label = tars_predictions["tars_labels"].iloc[nonzero_entries][0]
+                else:
+                    id_from_max_score = nonzero_entries[0][np.argmax(score_tars_label[:, col_idx][nonzero_entries])]
+                    tars_tag = pred_tars_labels[id_from_max_score, col_idx]
+                    tars_label = tars_predictions["tars_labels"].iloc[id_from_max_score]
+
+                current_preds.append(
+                    to_original_tag(
+                        tars_tag=tars_tag,
+                        tars_label=tars_label
+                    )
+                )
 
         assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in tars_predictions["ner_tags"].to_list())
         current_labels = [original_index2original_tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
