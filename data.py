@@ -4,14 +4,14 @@ def tokenize_and_align_labels(examples, tokenizer):
     tokenized_inputs = tokenizer(examples["tokens"], truncation=True, is_split_into_words=True)
 
     labels = []
-    for i, label in enumerate(examples[f"tars_tags"]):
+    for i, (label, label_length) in enumerate(zip(examples["tars_tags"], examples["tars_label_length"])):
         word_ids = tokenized_inputs.word_ids(batch_index=i)  # Map tokens to their respective word.
         previous_word_idx = None
         label_ids = []
         for word_idx in word_ids:  # Set the special tokens to -100.
             if word_idx is None:
                 label_ids.append(-100)
-            elif word_idx != previous_word_idx:  # Only label the first token of a given word.
+            elif word_idx != previous_word_idx and word_idx >= label_length:  # Only label the first token of a given word.
                 label_ids.append(label[word_idx])
             else:
                 label_ids.append(-100)
@@ -22,14 +22,7 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
-
-    original_tags = dataset.features["ner_tags"].feature
-    index2tag = {idx: tag for idx, tag in enumerate(original_tags.names)}
-
-    tars2tag = {}
-    for k, v in tag2tars.items():
-        tars2tag[v] = tars2tag.get(v, []) + [k]
+def make_tars_dataset(dataset, tokenizer, index2tag, tag2tars, tars_head, num_negatives: str = "one"):
 
     def tars_labels(example):
         tars_labels = []
@@ -41,15 +34,18 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
 
     dataset = dataset.map(tars_labels)
 
-    def tars_format(examples):
+    def tars_format(examples, num_negatives):
 
         all_tars_labels = set(tag2tars.values())
-        all_tars_labels.remove("O")
+        if "O" in all_tars_labels:
+            all_tars_labels.remove("O")
 
         output_tars_formatted_tokens = []
         output_tars_formatted_tags = []
+        output_tars_label = []
         output_original_tags = []
         output_ids = []
+        output_label_lengths = []
 
         for idx, original_tokens, original_tags, tars_labels in zip(examples["id"], examples["tokens"], examples["ner_tags"], examples["tars_labels"]):
 
@@ -77,26 +73,46 @@ def make_tars_dataset(dataset, tokenizer, tag2tars, tars_head):
                 output_original_tags.append(original_tags)
                 output_tars_formatted_tokens.append(tars_tokens)
                 output_tars_formatted_tags.append(filtered_tars_tags)
+                output_tars_label.append(positive_label)
+                output_label_lengths.append(len(tars_label_prefix))
 
             negative_samples = list(all_tars_labels.symmetric_difference(set(tars_labels)))
-            if len(negative_samples) > 0:
+            if len(negative_samples) > 0 and num_negatives == "one":
                 negative_label = random.sample(negative_samples, 1).pop()
-                tars_tokens = negative_label.split() + [tokenizer.sep_token] + original_tokens
+                tars_label_prefix = negative_label.split() + [tokenizer.sep_token]
+                tars_tokens = tars_label_prefix + original_tokens
                 filtered_tars_tags = [tars_head.get(tars_tag) for tars_tag in ["O"] * len(tars_tokens)]
 
                 output_ids.append(idx)
                 output_original_tags.append(original_tags)
                 output_tars_formatted_tokens.append(tars_tokens)
                 output_tars_formatted_tags.append(filtered_tars_tags)
+                output_tars_label.append(negative_label)
+                output_label_lengths.append(len(tars_label_prefix))
+
+            elif len(negative_samples) > 0 and num_negatives == "all":
+                for negative_label in negative_samples:
+                    tars_label_prefix = negative_label.split() + [tokenizer.sep_token]
+                    tars_tokens = tars_label_prefix + original_tokens
+                    filtered_tars_tags = [tars_head.get(tars_tag) for tars_tag in ["O"] * len(tars_tokens)]
+
+                    output_ids.append(idx)
+                    output_original_tags.append(original_tags)
+                    output_tars_formatted_tokens.append(tars_tokens)
+                    output_tars_formatted_tags.append(filtered_tars_tags)
+                    output_tars_label.append(negative_label)
+                    output_label_lengths.append(len(tars_label_prefix))
 
         return {
             "id": output_ids,
             "tokens": output_tars_formatted_tokens,
             "tars_tags": output_tars_formatted_tags,
-            "ner_tags": output_original_tags
+            "ner_tags": output_original_tags,
+            "tars_label_length": output_label_lengths,
+            "tars_labels": output_tars_label
         }
 
-    dataset = dataset.map(tars_format, batched=True, remove_columns=dataset.column_names)
+    dataset = dataset.map(lambda p: tars_format(p, num_negatives), batched=True, remove_columns=dataset.column_names)
 
     dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True, remove_columns=["tokens"])
 
