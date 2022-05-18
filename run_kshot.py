@@ -23,26 +23,11 @@ def main():
     parser.add_argument("--epochs", type=int, default=10)
     args = parser.parse_args()
 
-    model = AutoModelForTokenClassification.from_pretrained("results/tars/run1")
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    training_args = TrainingArguments(
-        output_dir="./results",
-        evaluation_strategy="epoch",
-        learning_rate=2e-5,
-        per_device_train_batch_size=16,
-        per_device_eval_batch_size=16,
-        num_train_epochs=3,
-        weight_decay=0.01,
-    )
-
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=tokenized_wnut["train"],
-        eval_dataset=tokenized_wnut["test"],
-        tokenizer=tokenizer,
-        data_collator=data_collator,
-    )
+    pretrained_model_path = "resources/baseline/run1"
+    model = AutoModelForTokenClassification.from_pretrained(pretrained_model_path).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path)
 
 if __name__ == "__main__":
     main()

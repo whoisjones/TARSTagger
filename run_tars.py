@@ -1,5 +1,6 @@
 import argparse
 
+from transformers import AutoModelForTokenClassification
 from transformers import AutoConfig, AutoTokenizer
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
@@ -12,18 +13,8 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from data import make_tars_dataset
-from model import TARSTagger
 
-def main():
-    # parser training arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="xlm-roberta-large")
-    parser.add_argument("--output_dir", type=str)
-    parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--lr", type=float, default=5e-6)
-    parser.add_argument("--epochs", type=int, default=10)
-    args = parser.parse_args()
-
+def main(args):
     # set cuda device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -34,52 +25,50 @@ def main():
     dataset = load_dataset("conll2003")
 
     if "train" in dataset:
-        train_dataset = dataset["train"]
+        train_dataset = load_dataset("conll2003", split="train[:200]")
     if "validation" in dataset:
         val_dataset = dataset["validation"]
     if "test" in dataset:
         test_dataset = dataset["test"]
 
     original_tags = train_dataset.features["ner_tags"].feature
-    index2tag = {idx: tag for idx, tag in enumerate(original_tags.names)}
+    original_index2original_tag = {idx: tag for idx, tag in enumerate(original_tags.names)}
 
-    tag2tars = {"O": "O", "B-PER": "person", "I-PER": "person", "B-ORG": "organization", "I-ORG": "organization",
+    tars_tag2tars_label = {"O": "O", "B-PER": "person", "I-PER": "person", "B-ORG": "organization", "I-ORG": "organization",
                 "B-LOC": "location", "I-LOC": "location", "B-MISC": "miscellaneous",
                 "I-MISC": "miscellaneous"}
-    tars2tag = {}
-    for k, v in tag2tars.items():
-        tars2tag[v] = tars2tag.get(v, []) + [k]
+    tars_label2tars_tag = {}
+    for k, v in tars_tag2tars_label.items():
+        tars_label2tars_tag[v] = tars_label2tars_tag.get(v, []) + [k]
 
-    tars_head = {'O': 0, 'B-': 1, 'I-': 2}
-    inv_tars_head = {v: k for k, v in tars_head.items()}
+    tars_prediction_head = {'O': 0, 'B-': 1, 'I-': 2}
+    inv_tars_prediction_head = {v: k for k, v in tars_prediction_head.items()}
 
     train_dataset = make_tars_dataset(dataset=train_dataset,
                                       tokenizer=tokenizer,
-                                      index2tag=index2tag,
-                                      tag2tars=tag2tars,
-                                      tars_head=tars_head,
+                                      index2tag=original_index2original_tag,
+                                      tag2tars=tars_tag2tars_label,
+                                      tars_head=tars_prediction_head,
                                       num_negatives="one")
 
     val_dataset = make_tars_dataset(dataset=val_dataset,
                                     tokenizer=tokenizer,
-                                    index2tag=index2tag,
-                                    tag2tars=tag2tars,
-                                    tars_head=tars_head,
+                                    index2tag=original_index2original_tag,
+                                    tag2tars=tars_tag2tars_label,
+                                    tars_head=tars_prediction_head,
                                     num_negatives="one")
 
     test_dataset = make_tars_dataset(dataset=test_dataset,
                                      tokenizer=tokenizer,
-                                     index2tag=index2tag,
-                                     tag2tars=tag2tars,
-                                     tars_head=tars_head,
+                                     index2tag=original_index2original_tag,
+                                     tag2tars=tars_tag2tars_label,
+                                     tars_head=tars_prediction_head,
                                      num_negatives="all")
 
-    tars_index2tag = {v: k for k, v in tars_head.items()}
+    config = AutoConfig.from_pretrained(args.model, num_labels=len(tars_prediction_head),
+                                        id2label=inv_tars_prediction_head, label2id=tars_prediction_head)
 
-    config = AutoConfig.from_pretrained(args.model, num_labels=len(tars_head),
-                                        id2label=tars_index2tag, label2id=tars_head)
-
-    model = TARSTagger.from_pretrained(args.model, config=config).to(device)
+    model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     training_arguments = TrainingArguments(
@@ -101,8 +90,8 @@ def main():
             example_labels, example_preds = [], []
             for seq_idx in range(seq_len):
                 if label_ids[batch_idx, seq_idx] != -100:
-                    example_labels.append(tars_index2tag[label_ids[batch_idx][seq_idx]])
-                    example_preds.append(tars_index2tag[preds[batch_idx][seq_idx]])
+                    example_labels.append(inv_tars_prediction_head[label_ids[batch_idx][seq_idx]])
+                    example_preds.append(inv_tars_prediction_head[preds[batch_idx][seq_idx]])
 
             labels_list.append(example_labels)
             preds_list.append(example_preds)
@@ -165,9 +154,9 @@ def main():
     df = df.groupby(["id"])
 
     def to_original_tag(tars_tag, tars_label):
-        original_tag_prefix = inv_tars_head.get(tars_tag)
+        original_tag_prefix = inv_tars_prediction_head.get(tars_tag)
         if original_tag_prefix != "O":
-            original_tag = [tag for tag in tars2tag.get(tars_label) if original_tag_prefix in tag]
+            original_tag = [tag for tag in tars_label2tars_tag.get(tars_label) if original_tag_prefix in tag]
             assert len(original_tag) == 1
             return original_tag.pop()
         else:
@@ -188,7 +177,7 @@ def main():
             )
 
         assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in tars_predictions["ner_tags"].to_list())
-        current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
+        current_labels = [original_index2original_tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
 
         predictions.append(current_preds)
         labels.append(current_labels)
@@ -201,4 +190,14 @@ def main():
         f.write(results)
 
 if __name__ == "__main__":
-    main()
+
+    # parser training arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, default="xlm-roberta-large")
+    parser.add_argument("--output_dir", type=str)
+    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--lr", type=float, default=5e-6)
+    parser.add_argument("--epochs", type=int, default=10)
+    args = parser.parse_args()
+
+    main(args)
