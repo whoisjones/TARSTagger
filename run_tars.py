@@ -7,15 +7,12 @@ from transformers import DataCollatorForTokenClassification
 from datasets import load_dataset
 
 import torch
-from torch.utils.data import DataLoader, SequentialSampler
+from torch.utils.data import DataLoader
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from data import make_tars_dataset
 from model import TARSTagger
-
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 def main():
     # parser training arguments
@@ -170,7 +167,7 @@ def main():
     def to_original_tag(tars_tag, tars_label):
         original_tag_prefix = inv_tars_head.get(tars_tag)
         if original_tag_prefix != "O":
-            original_tag = [tag for tag in tars2tag.get(tars_tag) if tars_label in tag]
+            original_tag = [tag for tag in tars2tag.get(tars_label) if original_tag_prefix in tag]
             assert len(original_tag) == 1
             return original_tag.pop()
         else:
