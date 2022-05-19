@@ -1,4 +1,5 @@
 import random
+from typing import List, Any
 
 
 def tokenize_and_align_labels(examples, tokenizer):
@@ -21,6 +22,19 @@ def tokenize_and_align_labels(examples, tokenizer):
 
     tokenized_inputs["labels"] = labels
     return tokenized_inputs
+
+def convert_ontonotes_format(examples):
+    tokens = []
+    labels = []
+    ids = []
+    idx = 0
+    for sentences in examples["sentences"]:
+        for sentence in sentences:
+            ids.append(idx)
+            idx += 1
+            tokens.append(sentence["words"])
+            labels.append(sentence["named_entities"])
+    return {"id": ids, "tokens": tokens, "ner_tags": labels}
 
 
 def tokenize_and_align_tars_labels(examples, tokenizer):
@@ -154,6 +168,6 @@ def make_tars_dataset(dataset, tokenizer, index2tag, org_tag2tars_label, tars_ta
 
     dataset = dataset.map(lambda p: tars_format(p, num_negatives), batched=True, remove_columns=dataset.column_names)
 
-    dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True, remove_columns=["tokens"])
+    dataset = dataset.map(lambda p: tokenize_and_align_tars_labels(p, tokenizer), batched=True, remove_columns=["tokens"])
 
     return dataset

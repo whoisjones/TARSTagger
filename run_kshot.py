@@ -18,16 +18,12 @@ def main(args):
     # set cuda device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    # load dataset
-    dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
-
     model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
     tokenizer = AutoTokenizer.from_pretrained(args.pretrained_model_path)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
-    tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True,
-                                    remove_columns=["tokens", "pos_tags", "chunk_tags", "ner_tags"])
+    tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True)
     train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
 
     training_arguments = TrainingArguments(

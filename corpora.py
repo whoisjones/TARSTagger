@@ -1,4 +1,5 @@
 from datasets import load_dataset
+from preprocessing import convert_ontonotes_format
 
 tars_label_name_map = {"O": "O",
                        "B-PER": "person", "I-PER": "person",
@@ -24,14 +25,17 @@ tars_label_name_map = {"O": "O",
                         "B-DATE": "date", "I-DATE": "date",
                        }
 
+standard_datasets = ["conll", "spanish", "dutch", "finnish"]
+ontonotes_datasets = ["ontonotes", "arabic", "chinese"]
+
 
 def load_corpus(dataset_name: str):
     dataset = _load_corpus(dataset_name)
-    tags, index2tag, tag2index = _load_tag_mapping(dataset_name=dataset_name, dataset=dataset)
+    tags, index2tag, tag2index = _load_tag_mapping(dataset)
     return dataset, tags, index2tag, tag2index
 
 
-def _load_corpus(dataset: str):
+def _load_corpus(dataset_name: str):
     dataset_key = "dataset_name"
     subset_key = "subset"
 
@@ -45,25 +49,24 @@ def _load_corpus(dataset: str):
         "chinese": {dataset_key: "conll2012_ontonotesv5", subset_key: "chinese_v4"}
     }
 
-    if dataset in available_datasets:
+    if dataset_name in available_datasets:
         dataset = load_dataset(
-            available_datasets.get(dataset).get(dataset_key),
-            available_datasets.get(dataset).get(subset_key) if subset_key in available_datasets.get(dataset) else None,
+            available_datasets.get(dataset_name).get(dataset_key),
+            available_datasets.get(dataset_name).get(subset_key) if subset_key in available_datasets.get(dataset_name) else None,
         )
     else:
-        raise ValueError(f"dataset {dataset} is not available. please choose from {[x for x in available_datasets.keys()]}")
+        raise ValueError(f"dataset {dataset_name} is not available. please choose from {[x for x in available_datasets.keys()]}")
 
+    if dataset_name in ontonotes_datasets:
+        features = {split: dataset["train"].features["sentences"][0]["named_entities"] for split in dataset}
+        dataset = dataset.map(convert_ontonotes_format, batched=True, remove_columns=dataset["train"].column_names)
+        for split, feature in features.items():
+            dataset[split].features["ner_tags"] = feature
     return dataset
 
 
-def _load_tag_mapping(dataset_name: str, dataset):
-    if dataset_name in ["conll", "spanish", "dutch", "finnish"]:
-        tags = dataset["train"].features["ner_tags"].feature
-    elif dataset_name in ["ontonotes", "arabic", "chinese"]:
-        tags = dataset["train"].features["sentences"][0]["named_entities"].feature
-    else:
-        raise ValueError(f"dataset {dataset_name} unknown.")
-
+def _load_tag_mapping(dataset):
+    tags = dataset["train"].features["ner_tags"].feature
     index2tag = {idx: tag for idx, tag in enumerate(tags.names)}
     tag2index = {tag: idx for idx, tag in enumerate(tags.names)}
 
