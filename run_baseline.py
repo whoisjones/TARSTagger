@@ -16,9 +16,6 @@ def main(args):
 
     # set cuda device
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    if device == "cuda":
-        import os
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.CUDA_VISIBLE_DEVICES)
 
     # load dataset
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
@@ -105,7 +102,6 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--CUDA_VISIBLE_DEVICES", type=str, default="0")
     args = parser.parse_args()
 
     main(args)
