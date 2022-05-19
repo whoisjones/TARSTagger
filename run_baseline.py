@@ -18,7 +18,7 @@ def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if device == "cuda":
         import os
-        os.environ["CUDA_VISIBLE_DEVICES"] = args.CUDA_VISIBLE_DEVICES
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.CUDA_VISIBLE_DEVICES)
 
     # load dataset
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
