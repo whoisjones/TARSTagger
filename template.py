@@ -25,9 +25,9 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
-import datasets
+import corpora
 import numpy as np
-from datasets import ClassLabel, load_dataset, load_metric
+from corpora import ClassLabel, load_dataset, load_metric
 
 import transformers
 from transformers import (
@@ -204,7 +204,7 @@ def main():
 
     log_level = training_args.get_process_log_level()
     logger.setLevel(log_level)
-    datasets.utils.logging.set_verbosity(log_level)
+    corpora.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.enable_default_handler()
     transformers.utils.logging.enable_explicit_format()

@@ -1,78 +1,48 @@
 import argparse
 
+from tqdm import tqdm
 from transformers import AutoModelForTokenClassification
 from transformers import AutoConfig, AutoTokenizer
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
-
-from datasets import load_dataset
 
 import torch
 from torch.utils.data import DataLoader
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
-from data import make_tars_dataset
-
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+from corpora import load_corpus, split_dataset, load_tars_mapping
+from preprocessing import make_tars_datasets
 
 def main(args):
+
     # set cuda device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    # tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
-
     # load dataset
-    dataset = load_dataset("conll2003")
+    dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
+    train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
 
-    if "train" in dataset:
-        train_dataset = load_dataset("conll2003", split="train[:4]")
-    if "validation" in dataset:
-        val_dataset = load_dataset("conll2003", split="train[:4]")
-    if "test" in dataset:
-        test_dataset = load_dataset("conll2003", split="train[:4]")
+    # tars tags
+    tars_tag2id = {'O': 0, 'B-': 1, 'I-': 2}
+    tars_id2tag = {v: k for k, v in tars_tag2id.items()}
+    org_tag2tars_label, tars_label2org_tag = load_tars_mapping(tags)
 
-    original_tags = train_dataset.features["ner_tags"].feature
-    original_index2original_tag = {idx: tag for idx, tag in enumerate(original_tags.names)}
-
-    tars_tag2tars_label = {"O": "O", "B-PER": "person", "I-PER": "person", "B-ORG": "organization", "I-ORG": "organization",
-                "B-LOC": "location", "I-LOC": "location", "B-MISC": "miscellaneous",
-                "I-MISC": "miscellaneous"}
-    tars_label2tars_tag = {}
-    for k, v in tars_tag2tars_label.items():
-        tars_label2tars_tag[v] = tars_label2tars_tag.get(v, []) + [k]
-
-    tars_prediction_head = {'O': 0, 'B-': 1, 'I-': 2}
-    inv_tars_prediction_head = {v: k for k, v in tars_prediction_head.items()}
-
-    train_dataset = make_tars_dataset(dataset=train_dataset,
-                                      tokenizer=tokenizer,
-                                      index2tag=original_index2original_tag,
-                                      tag2tars=tars_tag2tars_label,
-                                      tars_head=tars_prediction_head,
-                                      num_negatives="one")
-
-    val_dataset = make_tars_dataset(dataset=val_dataset,
-                                    tokenizer=tokenizer,
-                                    index2tag=original_index2original_tag,
-                                    tag2tars=tars_tag2tars_label,
-                                    tars_head=tars_prediction_head,
-                                    num_negatives="one")
-
-    test_dataset = make_tars_dataset(dataset=test_dataset,
-                                     tokenizer=tokenizer,
-                                     index2tag=original_index2original_tag,
-                                     tag2tars=tars_tag2tars_label,
-                                     tars_head=tars_prediction_head,
-                                     num_negatives="all")
-
-    config = AutoConfig.from_pretrained(args.model, num_labels=len(tars_prediction_head),
-                                        id2label=inv_tars_prediction_head, label2id=tars_prediction_head)
-
+    # model
+    config = AutoConfig.from_pretrained(args.model, num_labels=len(tars_tag2id),
+                                        id2label=tars_id2tag, label2id=tars_tag2id)
     model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+
+    # preprocessing
+    train_dataset, validation_dataset, test_dataset = make_tars_datasets(
+        datasets=[train_dataset, validation_dataset, test_dataset],
+        tokenizer=tokenizer,
+        index2tag=index2tag,
+        org_tag2tars_label=org_tag2tars_label,
+        tars_tag2id=tars_tag2id
+    )
 
     training_arguments = TrainingArguments(
         output_dir=args.output_dir,
@@ -93,8 +63,8 @@ def main(args):
             example_labels, example_preds = [], []
             for seq_idx in range(seq_len):
                 if label_ids[batch_idx, seq_idx] != -100:
-                    example_labels.append(inv_tars_prediction_head[label_ids[batch_idx][seq_idx]])
-                    example_preds.append(inv_tars_prediction_head[preds[batch_idx][seq_idx]])
+                    example_labels.append(tars_id2tag[label_ids[batch_idx][seq_idx]])
+                    example_preds.append(tars_id2tag[preds[batch_idx][seq_idx]])
 
             labels_list.append(example_labels)
             preds_list.append(example_preds)
@@ -110,7 +80,7 @@ def main(args):
         model=model,
         args=training_arguments,
         train_dataset=train_dataset,
-        eval_dataset=val_dataset,
+        eval_dataset=validation_dataset,
         tokenizer=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics
@@ -126,16 +96,22 @@ def main(args):
     trainer.save_state()
 
     metrics = trainer.evaluate()
-    metrics["eval_samples"] = len(val_dataset)
+    metrics["eval_samples"] = len(validation_dataset)
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
-    test_dataloader = DataLoader(test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
-                                 shuffle=False, collate_fn=data_collator, batch_size=16)
+    # evaluate tars
+    test_dataloader = DataLoader(
+        test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
+        shuffle=False,
+        collate_fn=data_collator,
+        batch_size=args.batch_size
+    )
 
+    # get logits
     with torch.no_grad():
         outputs = []
-        for batch in test_dataloader:
+        for batch in tqdm(test_dataloader):
             outputs.extend(model(**{k: v.to(device) for k, v in batch.items()}).logits)
 
     def extract_aligned_logits(row):
@@ -157,9 +133,9 @@ def main(args):
     df = df.groupby(["id"])
 
     def to_original_tag(tars_tag, tars_label):
-        original_tag_prefix = inv_tars_prediction_head.get(tars_tag)
+        original_tag_prefix = tars_id2tag.get(tars_tag)
         if original_tag_prefix != "O":
-            original_tag = [tag for tag in tars_label2tars_tag.get(tars_label) if original_tag_prefix in tag]
+            original_tag = [tag for tag in tars_label2org_tag.get(tars_label) if original_tag_prefix in tag]
             assert len(original_tag) == 1
             return original_tag.pop()
         else:
@@ -183,7 +159,7 @@ def main(args):
                 nonzero_entries = np.nonzero(pred_tars_labels[:, col_idx])
                 if nonzero_entries[0].shape[0] == 1:
                     tars_tag = pred_tars_labels[:, col_idx][nonzero_entries][0]
-                    tars_label = tars_predictions["tars_labels"].iloc[nonzero_entries][0]
+                    tars_label = tars_predictions["tars_labels"].iloc[nonzero_entries].iloc[0]
                 else:
                     id_from_max_score = nonzero_entries[0][np.argmax(score_tars_label[:, col_idx][nonzero_entries])]
                     tars_tag = pred_tars_labels[id_from_max_score, col_idx]
@@ -197,7 +173,7 @@ def main(args):
                 )
 
         assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in tars_predictions["ner_tags"].to_list())
-        current_labels = [original_index2original_tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
+        current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
 
         predictions.append(current_preds)
         labels.append(current_labels)
@@ -206,7 +182,7 @@ def main(args):
 
     print(results)
 
-    with open("results.txt", "w+") as f:
+    with open(f"{args.output_dir}/results.txt", "w+") as f:
         f.write(results)
 
 if __name__ == "__main__":
@@ -214,6 +190,7 @@ if __name__ == "__main__":
     # parser training arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="xlm-roberta-large")
+    parser.add_argument("--corpus", type=str, default="conll")
     parser.add_argument("--output_dir", type=str)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=5e-6)

@@ -4,43 +4,36 @@ from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassificat
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
-from datasets import load_dataset
-
 import torch
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
-from data import tokenize_and_align_labels
+from corpora import load_corpus, split_dataset
+from preprocessing import tokenize_and_align_labels
 
 
-def main():
-    # parser training arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="xlm-roberta-large")
-    parser.add_argument("--output_dir", type=str)
-    parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--lr", type=float, default=5e-6)
-    parser.add_argument("--epochs", type=int, default=10)
-    args = parser.parse_args()
+def main(args):
 
     # set cuda device
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda":
+        import os
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.CUDA_VISIBLE_DEVICES
 
     # load dataset
-    dataset = load_dataset("conll2003")
-    tags = dataset["train"].features["ner_tags"].feature
-    index2tag = {idx: tag for idx, tag in enumerate(tags.names)}
-    tag2index = {tag: idx for idx, tag in enumerate(tags.names)}
+    dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
 
+    # model
     config = AutoConfig.from_pretrained(args.model, num_labels=tags.num_classes,
                                         id2label=index2tag, label2id=tag2index)
-
     model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
+    # preprocessing
     tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True,
                                     remove_columns=["tokens", "pos_tags", "chunk_tags", "ner_tags"])
+    train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
 
     training_arguments = TrainingArguments(
         output_dir=args.output_dir,
@@ -77,8 +70,8 @@ def main():
     trainer = Trainer(
         model=model,
         args=training_arguments,
-        train_dataset=tokenized_dataset["train"],
-        eval_dataset=tokenized_dataset["validation"],
+        train_dataset=train_dataset,
+        eval_dataset=validation_dataset,
         tokenizer=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics
@@ -98,9 +91,21 @@ def main():
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
-    predictions, labels, metrics = trainer.predict(tokenized_dataset["test"], metric_key_prefix="predict")
+    predictions, labels, metrics = trainer.predict(test_dataset, metric_key_prefix="predict")
     trainer.log_metrics("predict", metrics)
     trainer.save_metrics("predict", metrics)
 
 if __name__ == "__main__":
-    main()
+
+    # parser training arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, default="xlm-roberta-large")
+    parser.add_argument("--corpus", type=str, default="conll")
+    parser.add_argument("--output_dir", type=str)
+    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--lr", type=float, default=5e-6)
+    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--CUDA_VISIBLE_DEVICES", type=str, default="0")
+    args = parser.parse_args()
+
+    main(args)
