@@ -28,8 +28,7 @@ def main(args):
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     # preprocessing
-    tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True,
-                                    remove_columns=["tokens", "pos_tags", "chunk_tags", "ner_tags"])
+    tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True)
     train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
 
     training_arguments = TrainingArguments(
