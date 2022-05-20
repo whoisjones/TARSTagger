@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from preprocessing import convert_ontonotes_format
+from preprocessing import convert_ontonotes_format, convert_fewnerd_format
 
 tars_label_name_map = {"O": "O",
                        "B-PER": "person", "I-PER": "person",
@@ -27,6 +27,7 @@ tars_label_name_map = {"O": "O",
 
 standard_datasets = ["conll", "spanish", "dutch", "finnish"]
 ontonotes_datasets = ["ontonotes", "arabic", "chinese"]
+fewnerd_datasets = ["fewnerd-inter", "fewnerd-intra", "fewnerd-supervised"]
 
 
 def load_corpus(dataset_name: str):
@@ -46,7 +47,10 @@ def _load_corpus(dataset_name: str):
         "finnish": {dataset_key: "finer"},
         "ontonotes": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
         "arabic": {dataset_key: "conll2012_ontonotesv5", subset_key: "arabic_v4"},
-        "chinese": {dataset_key: "conll2012_ontonotesv5", subset_key: "chinese_v4"}
+        "chinese": {dataset_key: "conll2012_ontonotesv5", subset_key: "chinese_v4"},
+        "fewnerd-inter": {dataset_key: "dfki-nlp/few-nerd", subset_key: "inter"},
+        "fewnerd-intra": {dataset_key: "dfki-nlp/few-nerd", subset_key: "intra"},
+        "fewnerd-supervised": {dataset_key: "dfki-nlp/few-nerd", subset_key: "supervised"},
     }
 
     if dataset_name in available_datasets:
@@ -62,6 +66,13 @@ def _load_corpus(dataset_name: str):
         dataset = dataset.map(convert_ontonotes_format, batched=True, remove_columns=dataset["train"].column_names)
         for split, feature in features.items():
             dataset[split].features["ner_tags"] = feature
+
+    if dataset_name in fewnerd_datasets:
+        features = {split: dataset["train"].features["fine_ner_tags"] for split in dataset}
+        dataset = dataset.map(convert_fewnerd_format, batched=True, remove_columns=dataset["train"].column_names)
+        for split, feature in features.items():
+            dataset[split].features["ner_tags"] = feature
+
     return dataset
 
 
