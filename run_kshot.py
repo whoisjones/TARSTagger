@@ -68,30 +68,32 @@ def main(args):
         compute_metrics=compute_metrics
     )
 
-    if args.k > 0:
-        model.classifier = torch.nn.Linear(in_features=model.classifier.in_features, out_features=tags.num_classes)
+    for run in range(args.seed):
 
-        random.seed(args.seed)
-        dataset["train"] = dataset["train"].select(random.sample(range(0, len(dataset["train"])), args.k))
-        random.seed(args.seed)
-        dataset["validation"] = dataset["validation"].select(random.sample(range(0, len(dataset["validation"])), args.k))
+        if args.k > 0:
+            model.classifier = torch.nn.Linear(in_features=model.classifier.in_features, out_features=tags.num_classes)
 
-        train_result = trainer.train()
-        metrics = train_result.metrics
+            random.seed(run)
+            dataset["train"] = dataset["train"].select(random.sample(range(0, len(dataset["train"])), args.k))
+            random.seed(run)
+            dataset["validation"] = dataset["validation"].select(random.sample(range(0, len(dataset["validation"])), args.k))
 
-        metrics["train_samples"] = len(train_dataset)
-        trainer.log_metrics("train", metrics)
-        trainer.save_metrics("train", metrics)
-        trainer.save_state()
+            train_result = trainer.train()
+            metrics = train_result.metrics
 
-        metrics = trainer.evaluate()
-        metrics["eval_samples"] = len(validation_dataset)
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
+            metrics["train_samples"] = len(train_dataset)
+            trainer.log_metrics("train", metrics)
+            trainer.save_metrics("train", metrics)
+            trainer.save_state()
 
-    predictions, labels, metrics = trainer.predict(test_dataset, metric_key_prefix="predict")
-    trainer.log_metrics("predict", metrics)
-    trainer.save_metrics("predict", metrics)
+            metrics = trainer.evaluate()
+            metrics["eval_samples"] = len(validation_dataset)
+            trainer.log_metrics("eval", metrics)
+            trainer.save_metrics("eval", metrics)
+
+        predictions, labels, metrics = trainer.predict(test_dataset, metric_key_prefix="predict")
+        trainer.log_metrics("predict", metrics)
+        trainer.save_metrics("predict", metrics)
 
 if __name__ == "__main__":
 
@@ -104,7 +106,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seed", type=int, default=5)
     args = parser.parse_args()
 
     main(args)
