@@ -83,6 +83,16 @@ def _load_tag_mapping(dataset):
 
     return tags, index2tag, tag2index
 
+def load_label_id_mapping(dataset):
+    tags = dataset.features["ner_tags"].feature
+    label2id = {idx: tag for idx, tag in enumerate(tags.names)}
+    label2id = {k: [] for k in label2id.keys()}
+
+    for example in dataset:
+        for tag in set(example["ner_tags"]):
+            label2id[tag].append(example["id"])
+
+    return label2id
 
 def split_dataset(dataset):
     if "train" in dataset:
