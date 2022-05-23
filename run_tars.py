@@ -100,19 +100,21 @@ def main(args):
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
-    # evaluate tars
-    test_dataloader = DataLoader(
-        test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
-        shuffle=False,
-        collate_fn=data_collator,
-        batch_size=args.batch_size
-    )
+    def get_test_dataloader(test_dataset):
+        test_dataloader = DataLoader(
+            test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
+            shuffle=False,
+            collate_fn=data_collator,
+            batch_size=args.batch_size
+        )
+        return test_dataloader
 
-    # get logits
-    with torch.no_grad():
-        outputs = []
-        for batch in tqdm(test_dataloader):
-            outputs.extend(model(**{k: v.to(device) for k, v in batch.items()}).logits)
+    def get_logits(test_dataloader):
+        with torch.no_grad():
+            outputs = []
+            for batch in tqdm(test_dataloader):
+                outputs.extend(model(**{k: v.to(device) for k, v in batch.items()}).logits)
+        return outputs
 
     def extract_aligned_logits(row):
         logits_list = []
@@ -120,17 +122,19 @@ def main(args):
         labels = row["labels"]
         for label_idx in range(labels.shape[0]):
             if labels[label_idx] != -100:
-                logits_list.append(outputs[row.name][label_idx])
+                logits_list.append(logits[row.name][label_idx])
 
         if logits_list:
             return torch.stack(logits_list)
         else:
             return []
 
-    df = test_dataset.to_pandas()
-    df["logits"] = df.apply(lambda row: extract_aligned_logits(row), axis=1)
-    df = df[df["logits"].map(len) > 0]
-    df = df.groupby(["id"])
+    def group_predictions(test_dataset):
+        df = test_dataset.to_pandas()
+        df["logits"] = df.apply(lambda row: extract_aligned_logits(row), axis=1)
+        df = df[df["logits"].map(len) > 0]
+        df = df.groupby(["id"])
+        return df
 
     def to_original_tag(tars_tag, tars_label):
         original_tag_prefix = tars_id2tag.get(tars_tag)
@@ -141,44 +145,51 @@ def main(args):
         else:
             return original_tag_prefix
 
-    predictions, labels = [], []
-    for idx, tars_predictions in df:
-        logits_per_tars_label = torch.stack(tars_predictions["logits"].to_list()).cpu().detach().numpy()
-        pred_tars_labels = np.argmax(logits_per_tars_label, axis=2)
-        score_tars_label = np.max(logits_per_tars_label, axis=2)
-        current_preds = []
-        for col_idx in range(pred_tars_labels.shape[1]):
-            if not pred_tars_labels[:, col_idx].any():
-                current_preds.append(
-                    to_original_tag(
-                        tars_tag=0,
-                        tars_label=tars_predictions["tars_labels"].iloc[0]
+    def evaluate(predictions_df):
+        predictions, labels = [], []
+        for idx, tars_predictions in predictions_df:
+            logits_per_tars_label = torch.stack(tars_predictions["logits"].to_list()).cpu().detach().numpy()
+            pred_tars_labels = np.argmax(logits_per_tars_label, axis=2)
+            score_tars_label = np.max(logits_per_tars_label, axis=2)
+            current_preds = []
+            for col_idx in range(pred_tars_labels.shape[1]):
+                if not pred_tars_labels[:, col_idx].any():
+                    current_preds.append(
+                        to_original_tag(
+                            tars_tag=0,
+                            tars_label=tars_predictions["tars_labels"].iloc[0]
+                        )
                     )
-                )
-            else:
-                nonzero_entries = np.nonzero(pred_tars_labels[:, col_idx])
-                if nonzero_entries[0].shape[0] == 1:
-                    tars_tag = pred_tars_labels[:, col_idx][nonzero_entries][0]
-                    tars_label = tars_predictions["tars_labels"].iloc[nonzero_entries].iloc[0]
                 else:
-                    id_from_max_score = nonzero_entries[0][np.argmax(score_tars_label[:, col_idx][nonzero_entries])]
-                    tars_tag = pred_tars_labels[id_from_max_score, col_idx]
-                    tars_label = tars_predictions["tars_labels"].iloc[id_from_max_score]
+                    nonzero_entries = np.nonzero(pred_tars_labels[:, col_idx])
+                    if nonzero_entries[0].shape[0] == 1:
+                        tars_tag = pred_tars_labels[:, col_idx][nonzero_entries][0]
+                        tars_label = tars_predictions["tars_labels"].iloc[nonzero_entries].iloc[0]
+                    else:
+                        id_from_max_score = nonzero_entries[0][np.argmax(score_tars_label[:, col_idx][nonzero_entries])]
+                        tars_tag = pred_tars_labels[id_from_max_score, col_idx]
+                        tars_label = tars_predictions["tars_labels"].iloc[id_from_max_score]
 
-                current_preds.append(
-                    to_original_tag(
-                        tars_tag=tars_tag,
-                        tars_label=tars_label
+                    current_preds.append(
+                        to_original_tag(
+                            tars_tag=tars_tag,
+                            tars_label=tars_label
+                        )
                     )
-                )
 
-        assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in tars_predictions["ner_tags"].to_list())
-        current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
+            assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in tars_predictions["ner_tags"].to_list())
+            current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
 
-        predictions.append(current_preds)
-        labels.append(current_labels)
+            predictions.append(current_preds)
+            labels.append(current_labels)
 
-    results = classification_report(labels, predictions)
+        return predictions, labels
+
+    test_dataloader = get_test_dataloader(test_dataset)
+    logits = get_logits(test_dataloader)
+    predictions_df = group_predictions(test_dataset)
+    y_pred, y_true = evaluate(predictions_df)
+    results = classification_report(y_true, y_pred)
 
     print(results)
 
