@@ -1,3 +1,4 @@
+import datasets
 from datasets import load_dataset
 from preprocessing import convert_ontonotes_format, convert_fewnerd_format
 
@@ -21,8 +22,8 @@ tars_label_name_map = {"O": "O",
                        "B-QUANTITY": "quantity", "I-QUANTITY": "quantity",
                        "B-TIME": "time", "I-TIME": "time",
                        "B-WORK_OF_ART": "art", "I-WORK_OF_ART": "art",
-                        "B-PRO": "product", "I-PRO": "product",
-                        "B-DATE": "date", "I-DATE": "date",
+                       "B-PRO": "product", "I-PRO": "product",
+                       "B-DATE": "date", "I-DATE": "date",
                        }
 
 standard_datasets = ["conll", "spanish", "dutch", "finnish"]
@@ -66,6 +67,7 @@ def _load_corpus(dataset_name: str):
         dataset = dataset.map(convert_ontonotes_format, batched=True, remove_columns=dataset["train"].column_names)
         for split, feature in features.items():
             dataset[split].features["ner_tags"] = feature
+            dataset[split] = datasets.concatenate_datasets([datasets.Dataset.from_dict({"id": range(0, len(dataset[split]))}), dataset[split]])
 
     if dataset_name in fewnerd_datasets:
         features = {split: dataset["train"].features["fine_ner_tags"] for split in dataset}

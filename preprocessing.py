@@ -27,15 +27,11 @@ def tokenize_and_align_labels(examples, tokenizer):
 def convert_ontonotes_format(examples):
     tokens = []
     labels = []
-    ids = []
-    idx = 0
     for sentences in examples["sentences"]:
         for sentence in sentences:
-            ids.append(idx)
-            idx += 1
             tokens.append(sentence["words"])
             labels.append(sentence["named_entities"])
-    return {"id": ids, "tokens": tokens, "ner_tags": labels}
+    return {"tokens": tokens, "ner_tags": labels}
 
 
 def convert_fewnerd_format(examples):

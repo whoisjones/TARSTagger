@@ -13,7 +13,7 @@ from corpora import load_corpus, split_dataset, load_label_id_mapping
 from preprocessing import tokenize_and_align_labels
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 def main(args):
 
@@ -64,6 +64,7 @@ def main(args):
                                    else random.sample(label_id_mapping_train[key], len(label_id_mapping_train[key]))
                                    for key in label_id_mapping_train.keys()]
             train_kshot_indices = [item for sublist in train_kshot_indices for item in sublist]
+            random.seed(run)
             validation_kshot_indices = [random.sample(label_id_mapping_validation[key], args.k)
                                         if len(label_id_mapping_validation[key]) >= args.k
                                         else random.sample(label_id_mapping_validation[key], len(label_id_mapping_validation[key]))
