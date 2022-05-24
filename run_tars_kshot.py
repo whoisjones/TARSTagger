@@ -62,8 +62,6 @@ def main(args):
         if args.k > 0:
             model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
             train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
-            for idx in range(len(test_dataset) - 200, len(test_dataset)):
-                test_dataset[idx]["id"] = idx
 
             random.seed(run)
             train_kshot_indices = [random.sample(label_id_mapping_train[key], args.k)

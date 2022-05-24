@@ -67,7 +67,10 @@ def _load_corpus(dataset_name: str):
         dataset = dataset.map(convert_ontonotes_format, batched=True, remove_columns=dataset["train"].column_names)
         for split, feature in features.items():
             dataset[split].features["ner_tags"] = feature
-            dataset[split] = datasets.concatenate_datasets([datasets.Dataset.from_dict({"id": range(0, len(dataset[split]))}), dataset[split]])
+            dataset[split] = datasets.concatenate_datasets([
+                datasets.Dataset.from_dict({"id": range(0, len(dataset[split]))}),
+                dataset[split]
+            ], axis=1, split=dataset[split].split)
 
     if dataset_name in fewnerd_datasets:
         features = {split: dataset["train"].features["fine_ner_tags"] for split in dataset}
