@@ -90,12 +90,16 @@ def _load_tag_mapping(dataset):
 
 def load_label_id_mapping(dataset):
     tags = dataset.features["ner_tags"].feature
-    label2id = {idx: tag for idx, tag in enumerate(tags.names)}
-    label2id = {k: [] for k in label2id.keys()}
+    index2tag = {idx: tag for idx, tag in enumerate(tags.names)}
+    label2id = {idx: tars_label_name_map.get(tag) for idx, tag in enumerate(tags.names)}
+    label2id = {v: [] for v in label2id.values()}
 
     for example in dataset:
-        for tag in set(example["ner_tags"]):
+        for tag in set([tars_label_name_map.get(index2tag.get(tag)) for tag in example["ner_tags"]]):
             label2id[tag].append(example["id"])
+
+    if "O" in label2id:
+        del label2id["O"]
 
     return label2id
 
