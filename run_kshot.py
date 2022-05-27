@@ -12,8 +12,6 @@ from seqeval.metrics import classification_report, f1_score
 from corpora import load_corpus, split_dataset, load_label_id_mapping
 from preprocessing import tokenize_and_align_labels
 
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 def main(args):
 

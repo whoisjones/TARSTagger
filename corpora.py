@@ -1,6 +1,6 @@
 import datasets
 from datasets import load_dataset
-from preprocessing import convert_ontonotes_format, convert_fewnerd_format
+from preprocessing import convert_ontonotes_format, convert_fewnerd_format, split_arabic
 
 tars_label_name_map = {"O": "O",
                        "B-PER": "person", "I-PER": "person",
@@ -77,6 +77,9 @@ def _load_corpus(dataset_name: str):
         dataset = dataset.map(convert_fewnerd_format, batched=True, remove_columns=dataset["train"].column_names)
         for split, feature in features.items():
             dataset[split].features["ner_tags"] = feature
+
+    if dataset_name == "arabic":
+        dataset = dataset.map(split_arabic)
 
     return dataset
 

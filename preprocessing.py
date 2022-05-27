@@ -38,6 +38,11 @@ def convert_fewnerd_format(examples):
     return {"id": examples["id"], "tokens": examples["tokens"], "ner_tags": examples["fine_ner_tags"]}
 
 
+def split_arabic(example):
+    example["tokens"] = [token.split("#").pop(0) for token in example["tokens"]]
+    return example
+
+
 def tokenize_and_align_tars_labels(examples, tokenizer):
     tokenized_inputs = tokenizer(examples["tokens"], truncation=True, is_split_into_words=True)
 
