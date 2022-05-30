@@ -15,6 +15,8 @@ from seqeval.metrics import classification_report, f1_score
 from corpora import load_corpus, split_dataset, load_tars_mapping, load_label_id_mapping
 from preprocessing import make_tars_datasets
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main(args):
 
@@ -167,7 +169,10 @@ def main(args):
             def evaluate(predictions_df):
                 predictions, labels = [], []
                 for idx, tars_predictions in predictions_df:
-                    logits_per_tars_label = torch.stack(tars_predictions["logits"].to_list()).cpu().detach().numpy()
+                    raw_preds = tars_predictions["logits"].to_list()
+                    truncate_upper_bound = min([p.shape[0] for p in raw_preds])
+                    truncated_preds = [p[:truncate_upper_bound] for p in raw_preds]
+                    logits_per_tars_label = torch.stack(truncated_preds).cpu().detach().numpy()
                     pred_tars_labels = np.argmax(logits_per_tars_label, axis=2)
                     score_tars_label = np.max(logits_per_tars_label, axis=2)
                     current_preds = []
@@ -199,7 +204,7 @@ def main(args):
 
                     assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in
                                tars_predictions["ner_tags"].to_list())
-                    current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
+                    current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()[:truncate_upper_bound]]
 
                     predictions.append(current_preds)
                     labels.append(current_labels)
