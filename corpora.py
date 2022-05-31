@@ -1,6 +1,6 @@
 import datasets
 from datasets import load_dataset
-from preprocessing import convert_ontonotes_format, convert_fewnerd_format, split_arabic
+from preprocessing import convert_ontonotes_format, convert_fewnerd_format, split_arabic, convert_finnish_format
 
 tars_label_name_map = {"O": "O",
                        "B-PER": "person", "I-PER": "person",
@@ -80,6 +80,9 @@ def _load_corpus(dataset_name: str):
 
     if dataset_name == "arabic":
         dataset = dataset.map(split_arabic)
+
+    if dataset_name == "finnish":
+        dataset = dataset.map(convert_finnish_format)
 
     return dataset
 

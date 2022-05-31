@@ -42,6 +42,9 @@ def split_arabic(example):
     example["tokens"] = [token.split("#").pop(0) for token in example["tokens"]]
     return example
 
+def convert_finnish_format(example):
+    example["id"] = int(example["id"])
+    return example
 
 def tokenize_and_align_tars_labels(examples, tokenizer):
     tokenized_inputs = tokenizer(examples["tokens"], truncation=True, is_split_into_words=True)
