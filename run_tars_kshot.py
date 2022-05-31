@@ -15,8 +15,6 @@ from seqeval.metrics import classification_report, f1_score
 from corpora import load_corpus, split_dataset, load_tars_mapping, load_label_id_mapping
 from preprocessing import make_tars_datasets
 
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main(args):
 
