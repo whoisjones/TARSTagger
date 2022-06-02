@@ -25,12 +25,12 @@ def evaluate():
                         if "weighted avg" in line:
                             weighted.append(float(line.split()[-2]))
             print(f"{directory}")
-            print(f"micro avg: {round(np.average(micro_f1), 3) * 100}")
-            print(f"micro avg: {round(np.std(micro_f1), 3) * 100}")
-            print(f"macro avg: {round(np.average(macro_f1), 3) * 100}")
-            print(f"micro avg: {round(np.std(macro_f1), 3) * 100}")
-            print(f"weighted : {round(np.average(weighted), 3) * 100}")
-            print(f"micro avg: {round(np.std(weighted), 3) * 100}")
+            print(f"micro avg   : {round(np.average(micro_f1), 3) * 100}")
+            print(f"micro std   : {round(np.std(micro_f1), 3) * 100}")
+            print(f"macro avg   : {round(np.average(macro_f1), 3) * 100}")
+            print(f"macro std   : {round(np.std(macro_f1), 3) * 100}")
+            print(f"weighted avg: {round(np.average(weighted), 3) * 100}")
+            print(f"weighted std: {round(np.std(weighted), 3) * 100}")
         elif "tars" in directory:
             micro_f1 = []
             macro_f1 = []
@@ -45,9 +45,12 @@ def evaluate():
                         if "weighted avg" in line:
                             weighted.append(float(line.split()[-2]))
             print(f"{directory}")
-            print(f"micro avg: {round(np.average(micro_f1), 3) * 100}")
-            print(f"macro avg: {round(np.average(macro_f1), 3) * 100}")
-            print(f"weighted : {round(np.average(weighted), 3) * 100}")
+            print(f"micro avg   : {round(np.average(micro_f1), 3) * 100}")
+            print(f"micro std   : {round(np.std(micro_f1), 3) * 100}")
+            print(f"macro avg   : {round(np.average(macro_f1), 3) * 100}")
+            print(f"macro std   : {round(np.std(macro_f1), 3) * 100}")
+            print(f"weighted avg: {round(np.average(weighted), 3) * 100}")
+            print(f"weighted std: {round(np.std(weighted), 3) * 100}")
         else:
             raise ValueError(f"neither tars nor baseline included in folder name: {directory}")
 
