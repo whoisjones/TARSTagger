@@ -1,9 +1,12 @@
 import os
+import re
 import json
 import numpy as np
 
 def evaluate():
     directories = list(filter(lambda x: "shot" in x, os.listdir("resources")))
+    directories = sorted(directories, key=lambda x: (x.split("_")[0], x.split("_")[1], int(re.findall(r'\d+', x.split("_")[-1]).pop())))
+
     for directory in directories:
         print(50*'-')
         if "baseline" in directory:
@@ -23,8 +26,11 @@ def evaluate():
                             weighted.append(float(line.split()[-2]))
             print(f"{directory}")
             print(f"micro avg: {round(np.average(micro_f1), 3) * 100}")
+            print(f"micro avg: {round(np.std(micro_f1), 3) * 100}")
             print(f"macro avg: {round(np.average(macro_f1), 3) * 100}")
+            print(f"micro avg: {round(np.std(macro_f1), 3) * 100}")
             print(f"weighted : {round(np.average(weighted), 3) * 100}")
+            print(f"micro avg: {round(np.std(weighted), 3) * 100}")
         elif "tars" in directory:
             micro_f1 = []
             macro_f1 = []
