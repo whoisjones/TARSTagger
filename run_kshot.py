@@ -1,6 +1,8 @@
 import argparse
 import random
 
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
@@ -10,8 +12,10 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from corpora import load_corpus, split_dataset, load_label_id_mapping
-from preprocessing import tokenize_and_align_labels
+from preprocessing import tokenize_and_align_labels, k_shot_sampling
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main(args):
 
@@ -22,6 +26,7 @@ def main(args):
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
+    conll_data, conll_tags, conll_idx2tag, conll_tag2idx = load_corpus("conll")
     tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True)
     train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
     label_id_mapping_train = load_label_id_mapping(train_dataset)
@@ -49,66 +54,116 @@ def main(args):
         return {"classification_report": classification_report(y_true, y_pred),
                 "f1": f1_score(y_true, y_pred)}
 
-    for run in range(args.seed):
+    for k in args.k:
 
-        if args.k > 0:
+        if k == 0:
+
+            output_dir = f"resources/{args.corpus}_baseline_{k}shot"
+
             model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
-            model.classifier = torch.nn.Linear(in_features=model.classifier.in_features, out_features=tags.num_classes).to(device)
+            few_shot_classifier = torch.nn.Linear(in_features=model.classifier.in_features,
+                                                  out_features=tags.num_classes).to(device)
+            with torch.no_grad():
+                for conll_idx, conll_tag in conll_idx2tag.items():
+                    if conll_tag in tag2index:
+                        few_shot_classifier.weight[tag2index[conll_tag]] = model.classifier.weight[conll_idx]
+            model.classifier = few_shot_classifier.to(device)
             model.num_labels = tags.num_classes
 
-            random.seed(run)
-            train_kshot_indices = [random.sample(label_id_mapping_train[key], args.k)
-                                   if len(label_id_mapping_train[key]) >= args.k
-                                   else random.sample(label_id_mapping_train[key], len(label_id_mapping_train[key]))
-                                   for key in label_id_mapping_train.keys()]
-            train_kshot_indices = [item for sublist in train_kshot_indices for item in sublist]
-            random.seed(run)
-            validation_kshot_indices = [random.sample(label_id_mapping_validation[key], args.k)
-                                        if len(label_id_mapping_validation[key]) >= args.k
-                                        else random.sample(label_id_mapping_validation[key], len(label_id_mapping_validation[key]))
-                                        for key in label_id_mapping_validation.keys()]
-            validation_kshot_indices = [item for sublist in validation_kshot_indices for item in sublist]
+            data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
-            train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
-            train_dataset = train_dataset.select(train_kshot_indices)
-            validation_dataset = validation_dataset.select(validation_kshot_indices)
+            def get_test_dataloader(test_dataset):
+                test_dataloader = DataLoader(
+                    test_dataset.remove_columns(set(test_dataset.column_names) - set(["input_ids", "attention_mask", "labels"])),
+                    collate_fn=data_collator,
+                    shuffle=False,
+                )
+                return test_dataloader
 
-            training_arguments = TrainingArguments(
-                output_dir=args.output_dir + f"/run{run}",
-                evaluation_strategy="epoch",
-                save_strategy="no",
-                learning_rate=args.lr,
-                per_device_train_batch_size=args.batch_size,
-                per_device_eval_batch_size=args.batch_size,
-                num_train_epochs=args.epochs,
-            )
+            def get_logits(test_dataloader):
+                with torch.no_grad():
+                    outputs = []
+                    for batch in tqdm(test_dataloader):
+                        outputs.extend(model(**{k: v.to(device) for k, v in batch.items()}).logits)
+                return outputs
 
-            trainer = Trainer(
-                model=model,
-                args=training_arguments,
-                train_dataset=train_dataset,
-                eval_dataset=validation_dataset,
-                tokenizer=tokenizer,
-                data_collator=data_collator,
-                compute_metrics=compute_metrics
-            )
+            test_dataloader = get_test_dataloader(test_dataset)
+            outputs = get_logits(test_dataloader)
 
-            train_result = trainer.train()
-            metrics = train_result.metrics
+            preds, labels = [], []
+            for logits, inputs in zip(outputs, test_dataset):
+                max_logit_preds = logits.argmax(dim=1).detach().cpu().numpy()
+                curr_preds, curr_labels = [], []
+                for max_logit_pred, label in zip(max_logit_preds, inputs["labels"]):
+                    if label != -100:
+                        curr_preds.append(index2tag[max_logit_pred])
+                        curr_labels.append(index2tag[label])
+                preds.append(curr_preds)
+                labels.append(curr_labels)
 
-            metrics["train_samples"] = len(train_dataset)
-            trainer.log_metrics("train", metrics)
-            trainer.save_metrics("train", metrics)
-            trainer.save_state()
+            os.makedirs(output_dir)
+            results = classification_report(labels, preds)
+            with open(f"{output_dir}/results.txt", "w+") as f:
+                f.write(results)
 
-            metrics = trainer.evaluate()
-            metrics["eval_samples"] = len(validation_dataset)
-            trainer.log_metrics("eval", metrics)
-            trainer.save_metrics("eval", metrics)
+        else:
+            for run in range(args.seed):
 
-            predictions, labels, metrics = trainer.predict(test_dataset, metric_key_prefix="predict")
-            trainer.log_metrics("predict", metrics)
-            trainer.save_metrics("predict", metrics)
+                output_dir = f"resources/{args.corpus}_baseline_{k}shot/run{run}"
+
+                model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
+                few_shot_classifier = torch.nn.Linear(in_features=model.classifier.in_features,
+                                                      out_features=tags.num_classes).to(device)
+                with torch.no_grad():
+                    for conll_idx, conll_tag in conll_idx2tag.items():
+                        if conll_tag in tag2index:
+                            few_shot_classifier.weight[tag2index[conll_tag]] = model.classifier.weight[conll_idx]
+                model.classifier = few_shot_classifier.to(device)
+                model.num_labels = tags.num_classes
+
+                train_kshot_indices = k_shot_sampling(k=k, mapping=label_id_mapping_train, seed=run)
+                validation_kshot_indices = k_shot_sampling(k=k, mapping=label_id_mapping_validation, seed=run)
+
+                train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
+                train_dataset = train_dataset.select(train_kshot_indices)
+                validation_dataset = validation_dataset.select(validation_kshot_indices)
+
+                training_arguments = TrainingArguments(
+                    output_dir=output_dir,
+                    evaluation_strategy="epoch",
+                    save_strategy="no",
+                    learning_rate=args.lr,
+                    per_device_train_batch_size=args.batch_size,
+                    per_device_eval_batch_size=args.batch_size,
+                    num_train_epochs=args.epochs,
+                )
+
+                trainer = Trainer(
+                    model=model,
+                    args=training_arguments,
+                    train_dataset=train_dataset,
+                    eval_dataset=validation_dataset,
+                    tokenizer=tokenizer,
+                    data_collator=data_collator,
+                    compute_metrics=compute_metrics
+                )
+
+                train_result = trainer.train()
+                metrics = train_result.metrics
+
+                metrics["train_samples"] = len(train_dataset)
+                trainer.log_metrics("train", metrics)
+                trainer.save_metrics("train", metrics)
+                trainer.save_state()
+
+                metrics = trainer.evaluate()
+                metrics["eval_samples"] = len(validation_dataset)
+                trainer.log_metrics("eval", metrics)
+                trainer.save_metrics("eval", metrics)
+
+                predictions, labels, metrics = trainer.predict(test_dataset, metric_key_prefix="predict")
+                trainer.log_metrics("predict", metrics)
+                trainer.save_metrics("predict", metrics)
 
 if __name__ == "__main__":
 
@@ -117,12 +172,11 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="xlm-roberta-large")
     parser.add_argument("--corpus", type=str, default="conll")
     parser.add_argument("--pretrained_model_path", type=str)
-    parser.add_argument("--output_dir", type=str)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--seed", type=int, default=5)
-    parser.add_argument("--k", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=10)
+    parser.add_argument("--k", type=list, default=[1,2,4,8,16,32,64])
     args = parser.parse_args()
 
     main(args)

@@ -2,13 +2,26 @@ import os
 import re
 import json
 import numpy as np
+import pandas as pd
 
 def evaluate():
     directories = list(filter(lambda x: "shot" in x, os.listdir("resources")))
     directories = sorted(directories, key=lambda x: (x.split("_")[0], x.split("_")[1], int(re.findall(r'\d+', x.split("_")[-1]).pop())))
 
+    kshots = ["1shot", "2shot", "4shot", "8shot", "16shot", "32shot", "64shot"]
+
+    output_map = {}
     for directory in directories:
-        print(50*'-')
+        name = f"{directory.split('_')[0]} {directory.split('_')[1]}"
+        if not name in output_map:
+            output_map[name] = {kshot: {} for kshot in kshots}
+
+    df = pd.DataFrame()
+    df["k"] = kshots
+
+    for directory in directories:
+        name = f"{directory.split('_')[0]} {directory.split('_')[1]}"
+        k_shot = directory.split("_")[-1]
         if "baseline" in directory:
             micro_f1 = []
             macro_f1 = []
@@ -24,13 +37,6 @@ def evaluate():
                             macro_f1.append(float(line.split()[-2]))
                         if "weighted avg" in line:
                             weighted.append(float(line.split()[-2]))
-            print(f"{directory}")
-            print(f"micro avg   : {round(np.average(micro_f1), 3) * 100}")
-            print(f"micro std   : {round(np.std(micro_f1), 3) * 100}")
-            print(f"macro avg   : {round(np.average(macro_f1), 3) * 100}")
-            print(f"macro std   : {round(np.std(macro_f1), 3) * 100}")
-            print(f"weighted avg: {round(np.average(weighted), 3) * 100}")
-            print(f"weighted std: {round(np.std(weighted), 3) * 100}")
         elif "tars" in directory:
             micro_f1 = []
             macro_f1 = []
@@ -44,15 +50,22 @@ def evaluate():
                             macro_f1.append(float(line.split()[-2]))
                         if "weighted avg" in line:
                             weighted.append(float(line.split()[-2]))
-            print(f"{directory}")
-            print(f"micro avg   : {round(np.average(micro_f1), 3) * 100}")
-            print(f"micro std   : {round(np.std(micro_f1), 3) * 100}")
-            print(f"macro avg   : {round(np.average(macro_f1), 3) * 100}")
-            print(f"macro std   : {round(np.std(macro_f1), 3) * 100}")
-            print(f"weighted avg: {round(np.average(weighted), 3) * 100}")
-            print(f"weighted std: {round(np.std(weighted), 3) * 100}")
         else:
             raise ValueError(f"neither tars nor baseline included in folder name: {directory}")
+
+        output_map[name][k_shot] = {
+            "micro avg": round(np.average(micro_f1) * 100, 2),
+            "micro std": round(np.std(micro_f1) * 100, 2),
+            "macro avg": round(np.average(macro_f1) * 100, 2),
+            "macro std": round(np.std(macro_f1) * 100, 2),
+            "weighted avg": round(np.average(weighted) * 100, 2),
+            "weighted std": round(np.std(weighted) * 100, 2),
+        }
+
+    for name, results in output_map.items():
+        df[name] = [f"{results[kshot]['micro avg']} pm {results[kshot]['micro std']}" for kshot in kshots]
+
+    print(df.to_latex(index=False))
 
 if __name__ == "__main__":
     evaluate()
