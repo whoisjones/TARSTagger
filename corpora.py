@@ -29,7 +29,7 @@ tars_label_name_map = {"O": "O",
 standard_datasets = ["conll", "spanish", "dutch", "finnish"]
 ontonotes_datasets = ["ontonotes", "arabic", "chinese"]
 fewnerd_datasets = ["fewnerd-inter", "fewnerd-intra", "fewnerd-supervised"]
-
+tagset_extension_datasets = ["ontonotes_AB", "ontonotes_AC", "ontonotes_BC"]
 
 def load_corpus(dataset_name: str):
     dataset = _load_corpus(dataset_name)
@@ -52,6 +52,9 @@ def _load_corpus(dataset_name: str):
         "fewnerd-inter": {dataset_key: "dfki-nlp/few-nerd", subset_key: "inter"},
         "fewnerd-intra": {dataset_key: "dfki-nlp/few-nerd", subset_key: "intra"},
         "fewnerd-supervised": {dataset_key: "dfki-nlp/few-nerd", subset_key: "supervised"},
+        "ontonotes_AB": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+        "ontonotes_AC": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+        "ontonotes_BC": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
     }
 
     if dataset_name in available_datasets:
@@ -62,7 +65,7 @@ def _load_corpus(dataset_name: str):
     else:
         raise ValueError(f"dataset {dataset_name} is not available. please choose from {[x for x in available_datasets.keys()]}")
 
-    if dataset_name in ontonotes_datasets:
+    if dataset_name in ontonotes_datasets or dataset_name in tagset_extension_datasets:
         features = {split: dataset["train"].features["sentences"][0]["named_entities"] for split in dataset}
         dataset = dataset.map(convert_ontonotes_format, batched=True, remove_columns=dataset["train"].column_names)
         for split, feature in features.items():
@@ -71,6 +74,9 @@ def _load_corpus(dataset_name: str):
                 datasets.Dataset.from_dict({"id": range(0, len(dataset[split]))}),
                 dataset[split]
             ], axis=1, split=dataset[split].split)
+
+    if dataset_name in tagset_extension_datasets:
+        print()
 
     if dataset_name in fewnerd_datasets:
         features = {split: dataset["train"].features["fine_ner_tags"] for split in dataset}

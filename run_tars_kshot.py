@@ -1,5 +1,5 @@
 import argparse
-import random
+import os
 from tqdm import tqdm
 
 from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassification
@@ -171,6 +171,7 @@ def main(args):
 
             print(results)
 
+            os.makedirs(output_dir)
             with open(f"{output_dir}/results.txt", "w+") as f:
                 f.write(results)
 
