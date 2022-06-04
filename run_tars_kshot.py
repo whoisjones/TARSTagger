@@ -13,7 +13,7 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from corpora import load_corpus, split_dataset, load_tars_mapping, load_label_id_mapping
-from preprocessing import make_tars_datasets
+from preprocessing import make_tars_datasets, k_shot_sampling
 
 
 def main(args):
@@ -55,69 +55,22 @@ def main(args):
         return {"classification_report": classification_report(y_true, y_pred),
                 "f1": f1_score(y_true, y_pred)}
 
-    for run in range(args.seed):
+    for k in args.k:
 
-        if args.k > 0:
+        if k == 0:
+
+            output_dir = f"resources/{args.corpus}_baseline_{k}shot"
+
             model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
             train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
 
-            random.seed(run)
-            train_kshot_indices = [random.sample(label_id_mapping_train[key], args.k)
-                                   if len(label_id_mapping_train[key]) >= args.k
-                                   else random.sample(label_id_mapping_train[key], len(label_id_mapping_train[key]))
-                                   for key in label_id_mapping_train.keys()]
-            train_kshot_indices = [item for sublist in train_kshot_indices for item in sublist]
-
-            random.seed(run)
-            validation_kshot_indices = [random.sample(label_id_mapping_validation[key], args.k)
-                                        if len(label_id_mapping_validation[key]) >= args.k
-                                        else random.sample(label_id_mapping_validation[key], len(label_id_mapping_validation[key]))
-                                        for key in label_id_mapping_validation.keys()]
-            validation_kshot_indices = [item for sublist in validation_kshot_indices for item in sublist]
-
-            kshot_train_dataset = train_dataset.select(train_kshot_indices)
-            kshot_validation_dataset = validation_dataset.select(validation_kshot_indices)
-
-            kshot_train_dataset, kshot_validation_dataset, test_dataset = make_tars_datasets(
-                datasets=[kshot_train_dataset, kshot_validation_dataset, test_dataset],
+            _train, _val, test_dataset = make_tars_datasets(
+                datasets=[train_dataset, validation_dataset, test_dataset],
                 tokenizer=tokenizer,
                 index2tag=index2tag,
                 org_tag2tars_label=org_tag2tars_label,
                 tars_tag2id=tars_tag2id
             )
-
-            training_arguments = TrainingArguments(
-                output_dir=f"{args.output_dir}/run{run}",
-                evaluation_strategy="epoch",
-                save_strategy="no",
-                learning_rate=args.lr,
-                per_device_train_batch_size=args.batch_size,
-                per_device_eval_batch_size=args.batch_size,
-                num_train_epochs=args.epochs,
-            )
-
-            trainer = Trainer(
-                model=model,
-                args=training_arguments,
-                train_dataset=kshot_train_dataset,
-                eval_dataset=kshot_validation_dataset,
-                tokenizer=tokenizer,
-                data_collator=data_collator,
-                compute_metrics=compute_metrics
-            )
-
-            train_result = trainer.train()
-            metrics = train_result.metrics
-
-            metrics["train_samples"] = len(kshot_train_dataset)
-            trainer.log_metrics("train", metrics)
-            trainer.save_metrics("train", metrics)
-            trainer.save_state()
-
-            metrics = trainer.evaluate()
-            metrics["eval_samples"] = len(kshot_validation_dataset)
-            trainer.log_metrics("eval", metrics)
-            trainer.save_metrics("eval", metrics)
 
             def get_test_dataloader(test_dataset):
                 test_dataloader = DataLoader(
@@ -202,7 +155,8 @@ def main(args):
 
                     assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in
                                tars_predictions["ner_tags"].to_list())
-                    current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()[:truncate_upper_bound]]
+                    current_labels = [index2tag.get(x) for x in
+                                      tars_predictions["ner_tags"].iloc[0].tolist()[:truncate_upper_bound]]
 
                     predictions.append(current_preds)
                     labels.append(current_labels)
@@ -217,8 +171,164 @@ def main(args):
 
             print(results)
 
-            with open(f"{args.output_dir}/run{run}/results.txt", "w+") as f:
+            with open(f"{output_dir}/results.txt", "w+") as f:
                 f.write(results)
+
+        else:
+            for run in range(args.seed):
+
+                output_dir = f"resources/{args.corpus}_baseline_{k}shot/run{run}"
+
+                model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
+                train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
+
+                train_kshot_indices = k_shot_sampling(k=k, mapping=label_id_mapping_train, seed=run)
+                validation_kshot_indices = k_shot_sampling(k=k, mapping=label_id_mapping_validation, seed=run)
+
+                kshot_train_dataset = train_dataset.select(train_kshot_indices)
+                kshot_validation_dataset = validation_dataset.select(validation_kshot_indices)
+
+                kshot_train_dataset, kshot_validation_dataset, test_dataset = make_tars_datasets(
+                    datasets=[kshot_train_dataset, kshot_validation_dataset, test_dataset],
+                    tokenizer=tokenizer,
+                    index2tag=index2tag,
+                    org_tag2tars_label=org_tag2tars_label,
+                    tars_tag2id=tars_tag2id
+                )
+
+                training_arguments = TrainingArguments(
+                    output_dir=f"{args.output_dir}/run{run}",
+                    evaluation_strategy="epoch",
+                    save_strategy="no",
+                    learning_rate=args.lr,
+                    per_device_train_batch_size=args.batch_size,
+                    per_device_eval_batch_size=args.batch_size,
+                    num_train_epochs=args.epochs,
+                )
+
+                trainer = Trainer(
+                    model=model,
+                    args=training_arguments,
+                    train_dataset=kshot_train_dataset,
+                    eval_dataset=kshot_validation_dataset,
+                    tokenizer=tokenizer,
+                    data_collator=data_collator,
+                    compute_metrics=compute_metrics
+                )
+
+                train_result = trainer.train()
+                metrics = train_result.metrics
+
+                metrics["train_samples"] = len(kshot_train_dataset)
+                trainer.log_metrics("train", metrics)
+                trainer.save_metrics("train", metrics)
+                trainer.save_state()
+
+                metrics = trainer.evaluate()
+                metrics["eval_samples"] = len(kshot_validation_dataset)
+                trainer.log_metrics("eval", metrics)
+                trainer.save_metrics("eval", metrics)
+
+                def get_test_dataloader(test_dataset):
+                    test_dataloader = DataLoader(
+                        test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
+                        shuffle=False,
+                        collate_fn=data_collator,
+                        batch_size=args.batch_size
+                    )
+                    return test_dataloader
+
+                def get_logits(test_dataloader):
+                    with torch.no_grad():
+                        outputs = []
+                        for batch in tqdm(test_dataloader):
+                            outputs.extend(model(**{k: v.to(device) for k, v in batch.items()}).logits)
+                    return outputs
+
+                def extract_aligned_logits(row):
+                    logits_list = []
+
+                    labels = row["labels"]
+                    for label_idx in range(labels.shape[0]):
+                        if labels[label_idx] != -100:
+                            logits_list.append(logits[row.name][label_idx])
+
+                    if logits_list:
+                        return torch.stack(logits_list)
+                    else:
+                        return []
+
+                def group_predictions(test_dataset):
+                    df = test_dataset.to_pandas()
+                    df["logits"] = df.apply(lambda row: extract_aligned_logits(row), axis=1)
+                    df = df[df["logits"].map(len) > 0]
+                    df = df.groupby(["id"])
+                    return df
+
+                def to_original_tag(tars_tag, tars_label):
+                    original_tag_prefix = tars_id2tag.get(tars_tag)
+                    if original_tag_prefix != "O":
+                        original_tag = [tag for tag in tars_label2org_tag.get(tars_label) if original_tag_prefix in tag]
+                        assert len(original_tag) == 1
+                        return original_tag.pop()
+                    else:
+                        return original_tag_prefix
+
+                def evaluate(predictions_df):
+                    predictions, labels = [], []
+                    for idx, tars_predictions in predictions_df:
+                        raw_preds = tars_predictions["logits"].to_list()
+                        truncate_upper_bound = min([p.shape[0] for p in raw_preds])
+                        truncated_preds = [p[:truncate_upper_bound] for p in raw_preds]
+                        logits_per_tars_label = torch.stack(truncated_preds).cpu().detach().numpy()
+                        pred_tars_labels = np.argmax(logits_per_tars_label, axis=2)
+                        score_tars_label = np.max(logits_per_tars_label, axis=2)
+                        current_preds = []
+                        for col_idx in range(pred_tars_labels.shape[1]):
+                            if not pred_tars_labels[:, col_idx].any():
+                                current_preds.append(
+                                    to_original_tag(
+                                        tars_tag=0,
+                                        tars_label=tars_predictions["tars_labels"].iloc[0]
+                                    )
+                                )
+                            else:
+                                nonzero_entries = np.nonzero(pred_tars_labels[:, col_idx])
+                                if nonzero_entries[0].shape[0] == 1:
+                                    tars_tag = pred_tars_labels[:, col_idx][nonzero_entries][0]
+                                    tars_label = tars_predictions["tars_labels"].iloc[nonzero_entries].iloc[0]
+                                else:
+                                    id_from_max_score = nonzero_entries[0][
+                                        np.argmax(score_tars_label[:, col_idx][nonzero_entries])]
+                                    tars_tag = pred_tars_labels[id_from_max_score, col_idx]
+                                    tars_label = tars_predictions["tars_labels"].iloc[id_from_max_score]
+
+                                current_preds.append(
+                                    to_original_tag(
+                                        tars_tag=tars_tag,
+                                        tars_label=tars_label
+                                    )
+                                )
+
+                        assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in
+                                   tars_predictions["ner_tags"].to_list())
+                        current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()[:truncate_upper_bound]]
+
+                        predictions.append(current_preds)
+                        labels.append(current_labels)
+
+                    return predictions, labels
+
+                test_dataloader = get_test_dataloader(test_dataset)
+                logits = get_logits(test_dataloader)
+                predictions_df = group_predictions(test_dataset)
+                y_pred, y_true = evaluate(predictions_df)
+                results = classification_report(y_true, y_pred)
+
+                print(results)
+
+                with open(f"{output_dir}/results.txt", "w+") as f:
+                    f.write(results)
 
 if __name__ == "__main__":
 
@@ -227,12 +337,11 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="xlm-roberta-large")
     parser.add_argument("--corpus", type=str, default="conll")
     parser.add_argument("--pretrained_model_path", type=str)
-    parser.add_argument("--output_dir", type=str)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--seed", type=int, default=5)
-    parser.add_argument("--k", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=10)
+    parser.add_argument("--k", type=list, default=[0,1,2,4,8,16,32,64])
     args = parser.parse_args()
 
     main(args)
