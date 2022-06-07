@@ -8,7 +8,7 @@ def evaluate():
     directories = list(filter(lambda x: "shot" in x, os.listdir("resources")))
     directories = sorted(directories, key=lambda x: (x.split("_")[0], x.split("_")[1], int(re.findall(r'\d+', x.split("_")[-1]).pop())))
 
-    kshots = ["1shot", "2shot", "4shot", "8shot", "16shot", "32shot", "64shot"]
+    kshots = ["0shot", "1shot", "2shot", "4shot", "8shot", "16shot", "32shot", "64shot"]
 
     output_map = {}
     for directory in directories:
@@ -22,7 +22,7 @@ def evaluate():
     for directory in directories:
         name = f"{directory.split('_')[0]} {directory.split('_')[1]}"
         k_shot = directory.split("_")[-1]
-        if "baseline" in directory:
+        if "baseline" in directory and not "0shot" in directory:
             micro_f1 = []
             macro_f1 = []
             weighted = []
@@ -37,7 +37,7 @@ def evaluate():
                             macro_f1.append(float(line.split()[-2]))
                         if "weighted avg" in line:
                             weighted.append(float(line.split()[-2]))
-        elif "tars" in directory:
+        elif "tars" in directory and not "0shot" in directory:
             micro_f1 = []
             macro_f1 = []
             weighted = []
@@ -50,6 +50,18 @@ def evaluate():
                             macro_f1.append(float(line.split()[-2]))
                         if "weighted avg" in line:
                             weighted.append(float(line.split()[-2]))
+        elif "0shot" in directory:
+            micro_f1 = []
+            macro_f1 = []
+            weighted = []
+            with open(f"resources/{directory}/results.txt") as f:
+                for line in f.readlines():
+                    if "micro avg" in line:
+                        micro_f1.append(float(line.split()[-2]))
+                    if "macro avg" in line:
+                        macro_f1.append(float(line.split()[-2]))
+                    if "weighted avg" in line:
+                        weighted.append(float(line.split()[-2]))
         else:
             raise ValueError(f"neither tars nor baseline included in folder name: {directory}")
 

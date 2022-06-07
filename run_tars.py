@@ -100,6 +100,7 @@ def main(args):
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
+    """
     def get_test_dataloader(test_dataset):
         test_dataloader = DataLoader(
             test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
@@ -195,6 +196,7 @@ def main(args):
 
     with open(f"{args.output_dir}/results.txt", "w+") as f:
         f.write(results)
+    """
 
 if __name__ == "__main__":
 
