@@ -342,7 +342,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--seed", type=int, default=10)
-    parser.add_argument("--k", type=list, default=[0,1,2,4,8,16,32,64])
+    parser.add_argument("--k", type=list, default=[1,5])
     args = parser.parse_args()
 
     main(args)

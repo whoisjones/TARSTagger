@@ -29,7 +29,8 @@ tars_label_name_map = {"O": "O",
 standard_datasets = ["conll", "spanish", "dutch", "finnish"]
 ontonotes_datasets = ["ontonotes", "arabic", "chinese"]
 fewnerd_datasets = ["fewnerd-inter", "fewnerd-intra", "fewnerd-supervised"]
-tagset_extension_datasets = ["ontonotes_AB", "ontonotes_AC", "ontonotes_BC"]
+tagset_extension_datasets = ["ontonotes_AB", "ontonotes_AC", "ontonotes_BC",
+                             "ontonotes_A", "ontonotes_B", "ontonotes_C"]
 
 group_a = ["B-ORG", "B-NORP", "B-ORDINAL", "B-WORK_OF_ART", "B-QUANTITY", "B-LAW",
            "I-ORG", "I-NORP", "I-ORDINAL", "I-WORK_OF_ART", "I-QUANTITY", "I-LAW"]
@@ -64,6 +65,9 @@ def _load_corpus(dataset_name: str):
         "ontonotes_AB": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
         "ontonotes_AC": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
         "ontonotes_BC": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+        "ontonotes_A": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+        "ontonotes_B": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+        "ontonotes_C": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
     }
 
     if dataset_name in available_datasets:
@@ -98,6 +102,15 @@ def _load_corpus(dataset_name: str):
         elif "AC" in dataset_name:
             train_tags = group_a + group_c
             eval_tags = group_b
+        elif "A" in dataset_name:
+            train_tags = group_a
+            eval_tags = group_a
+        elif "B" in dataset_name:
+            train_tags = group_b
+            eval_tags = group_b
+        elif "C" in dataset_name:
+            train_tags = group_c
+            eval_tags = group_c
 
         def train_transform(example):
             example["ner_tags"] = [x if index2tag[x] in train_tags else 0 for x in example["ner_tags"]]

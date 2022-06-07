@@ -75,7 +75,7 @@ def evaluate():
         }
 
     for name, results in output_map.items():
-        df[name] = [f"{results[kshot]['micro avg']} pm {results[kshot]['micro std']}" for kshot in kshots]
+        df[name] = [f"{results[kshot]['macro avg']} pm {results[kshot]['micro std']}" for kshot in kshots]
 
     print(df.to_latex(index=False))
 
