@@ -20,6 +20,8 @@ def evaluate():
     df["k"] = kshots
 
     for directory in directories:
+        if directory == "ontonotes_tars_64shot":
+            continue
         name = f"{directory.split('_')[0]} {directory.split('_')[1]}"
         k_shot = directory.split("_")[-1]
         if "baseline" in directory and not "0shot" in directory:
@@ -75,7 +77,10 @@ def evaluate():
         }
 
     for name, results in output_map.items():
-        df[name] = [f"{results[kshot]['macro avg']} pm {results[kshot]['micro std']}" for kshot in kshots]
+        if name == "ontonotes tars":
+            df[name] = [f"{results[kshot]['weighted avg']} pm {results[kshot]['weighted std']}" for kshot in kshots[:-1]] + [0]
+        else:
+            df[name] = [f"{results[kshot]['weighted avg']} pm {results[kshot]['weighted std']}" for kshot in kshots]
 
     print(df.to_latex(index=False))
 

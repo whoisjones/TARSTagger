@@ -198,7 +198,7 @@ def main(args):
                 )
 
                 training_arguments = TrainingArguments(
-                    output_dir=f"{output_dir}/run{run}",
+                    output_dir=output_dir,
                     evaluation_strategy="epoch",
                     save_strategy="no",
                     learning_rate=args.lr,

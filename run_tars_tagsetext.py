@@ -13,7 +13,7 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from corpora import load_corpus, split_dataset, load_tars_mapping, load_label_id_mapping
-from preprocessing import make_tars_datasets, k_shot_sampling
+from preprocessing import make_tars_datasets, k_shot_strict_sampling
 
 
 def main(args):
@@ -183,8 +183,8 @@ def main(args):
                 model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
                 train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
 
-                train_kshot_indices = k_shot_sampling(k=k, mapping=label_id_mapping_train, seed=run)
-                validation_kshot_indices = k_shot_sampling(k=k, mapping=label_id_mapping_validation, seed=run)
+                train_kshot_indices = k_shot_strict_sampling(k=k, mapping=label_id_mapping_train, seed=run)
+                validation_kshot_indices = k_shot_strict_sampling(k=k, mapping=label_id_mapping_validation, seed=run)
 
                 kshot_train_dataset = train_dataset.select(train_kshot_indices)
                 kshot_validation_dataset = validation_dataset.select(validation_kshot_indices)
@@ -198,7 +198,7 @@ def main(args):
                 )
 
                 training_arguments = TrainingArguments(
-                    output_dir=f"{output_dir}/run{run}",
+                    output_dir=output_dir,
                     evaluation_strategy="epoch",
                     save_strategy="no",
                     learning_rate=args.lr,
@@ -342,7 +342,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--seed", type=int, default=10)
-    parser.add_argument("--k", type=list, default=[1,5])
+    parser.add_argument("--k", type=list, default=[1, 5])
     args = parser.parse_args()
 
     main(args)
