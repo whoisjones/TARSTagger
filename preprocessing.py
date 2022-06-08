@@ -79,7 +79,7 @@ def make_tars_datasets(datasets: list, tokenizer, index2tag, org_tag2tars_label,
                                               index2tag=index2tag,
                                               org_tag2tars_label=org_tag2tars_label,
                                               tars_tag2id=tars_tag2id,
-                                              num_negatives="all" if dataset.split._name == "test" else "one")
+                                              num_negatives="all" if dataset.split._name == "test" else 0)
         tars_datasets.append(processed_dataset)
 
     return tuple(tars_datasets)
