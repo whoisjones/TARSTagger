@@ -59,7 +59,7 @@ def main(args):
 
         if k == 0:
 
-            output_dir = f"resources/{args.corpus}_tars_{k}shot"
+            output_dir = f"tag_set_extension/{args.corpus}_tars_{k}shot"
 
             model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
             train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
@@ -178,7 +178,7 @@ def main(args):
         else:
             for run in range(args.seed):
 
-                output_dir = f"resources/{args.corpus}_tars_{k}shot/run{run}"
+                output_dir = f"tag_set_extension/{args.corpus}_tars_{k}shot/run{run}"
 
                 model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
                 train_dataset, validation_dataset, test_dataset = split_dataset(dataset)

@@ -44,6 +44,7 @@ group_c = ["B-PERSON", "B-DATE", "B-MONEY", "B-LOC", "B-FAC", "B-PRODUCT",
 def load_corpus(dataset_name: str):
     dataset = _load_corpus(dataset_name)
     tags, index2tag, tag2index = _load_tag_mapping(dataset)
+
     return dataset, tags, index2tag, tag2index
 
 
@@ -93,30 +94,32 @@ def _load_corpus(dataset_name: str):
         index2tag = {idx: tag for idx, tag in enumerate(tags.names)}
         tag2index = {tag: idx for idx, tag in enumerate(tags.names)}
 
-        if "AB" in dataset_name:
+        if dataset_name == "ontonotes_AB":
             train_tags = group_a + group_b
             eval_tags = group_c
-        elif "BC" in dataset_name:
+        elif dataset_name == "ontonotes_AB":
             train_tags = group_b + group_c
             eval_tags = group_a
-        elif "AC" in dataset_name:
+        elif dataset_name == "ontonotes_AC":
             train_tags = group_a + group_c
             eval_tags = group_b
-        elif "A" in dataset_name:
+        elif dataset_name == "ontonotes_A":
             train_tags = group_a
             eval_tags = group_a
-        elif "B" in dataset_name:
+        elif dataset_name == "ontonotes_B":
             train_tags = group_b
             eval_tags = group_b
-        elif "C" in dataset_name:
+        elif dataset_name == "ontonotes_C":
             train_tags = group_c
             eval_tags = group_c
 
         def train_transform(example):
             example["ner_tags"] = [x if index2tag[x] in train_tags else 0 for x in example["ner_tags"]]
+            return example
 
         def eval_transform(example):
             example["ner_tags"] = [x if index2tag[x] in eval_tags else 0 for x in example["ner_tags"]]
+            return example
 
         dataset["train"] = dataset["train"].map(train_transform)
         dataset["validation"] = dataset["validation"].map(train_transform)
@@ -151,7 +154,7 @@ def load_label_id_mapping(dataset):
     label2id = {v: [] for v in label2id.values()}
 
     for example in dataset:
-        for tag in set([tars_label_name_map.get(index2tag.get(tag)) for tag in example["ner_tags"]]):
+        for tag in set([tars_label_name_map.get(index2tag.get(tag)) if tag in tars_label_name_map else "O" for tag in example["ner_tags"]]):
             label2id[tag].append(example["id"])
 
     if "O" in label2id:
