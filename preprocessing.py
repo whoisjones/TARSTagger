@@ -237,7 +237,7 @@ def k_shot_strict_sampling(k, mapping, seed):
             add = []
             for label in count.keys():
                 if sample in mapping[label]:
-                    if count[label] + 1 < k:
+                    if count[label] + 1 <= k:
                         count[label] += 1
                         add.append(True)
                     else:
