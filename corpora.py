@@ -92,38 +92,27 @@ def _load_corpus(dataset_name: str):
     if dataset_name in tagset_extension_datasets:
         tags = dataset["train"].features["ner_tags"].feature
         index2tag = {idx: tag for idx, tag in enumerate(tags.names)}
-        tag2index = {tag: idx for idx, tag in enumerate(tags.names)}
 
         if dataset_name == "ontonotes_AB":
-            train_tags = group_a + group_b
-            eval_tags = group_c
-        elif dataset_name == "ontonotes_AB":
-            train_tags = group_b + group_c
-            eval_tags = group_a
+            tags = group_a + group_b
+        elif dataset_name == "ontonotes_BC":
+            tags = group_b + group_c
         elif dataset_name == "ontonotes_AC":
-            train_tags = group_a + group_c
-            eval_tags = group_b
+            tags = group_a + group_c
         elif dataset_name == "ontonotes_A":
-            train_tags = group_a
-            eval_tags = group_a
+            tags = group_a
         elif dataset_name == "ontonotes_B":
-            train_tags = group_b
-            eval_tags = group_b
+            tags = group_b
         elif dataset_name == "ontonotes_C":
-            train_tags = group_c
-            eval_tags = group_c
+            tags = group_c
 
-        def train_transform(example):
-            example["ner_tags"] = [x if index2tag[x] in train_tags else 0 for x in example["ner_tags"]]
+        def tag_transform(example):
+            example["ner_tags"] = [x if index2tag[x] in tags else 0 for x in example["ner_tags"]]
             return example
 
-        def eval_transform(example):
-            example["ner_tags"] = [x if index2tag[x] in eval_tags else 0 for x in example["ner_tags"]]
-            return example
-
-        dataset["train"] = dataset["train"].map(train_transform)
-        dataset["validation"] = dataset["validation"].map(train_transform)
-        dataset["test"] = dataset["test"].map(eval_transform)
+        dataset["train"] = dataset["train"].map(tag_transform)
+        dataset["validation"] = dataset["validation"].map(tag_transform)
+        dataset["test"] = dataset["test"].map(tag_transform)
 
     if dataset_name in fewnerd_datasets:
         features = {split: dataset["train"].features["fine_ner_tags"] for split in dataset}
