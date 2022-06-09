@@ -42,7 +42,7 @@ def split_arabic(example):
     example["tokens"] = [token.split("#").pop(0) for token in example["tokens"]]
     return example
 
-def convert_finnish_format(example):
+def convert_id_to_int(example):
     example["id"] = int(example["id"])
     return example
 

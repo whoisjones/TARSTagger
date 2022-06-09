@@ -1,6 +1,6 @@
 import datasets
 from datasets import load_dataset
-from preprocessing import convert_ontonotes_format, convert_fewnerd_format, split_arabic, convert_finnish_format
+from preprocessing import convert_ontonotes_format, convert_fewnerd_format, split_arabic, convert_id_to_int
 
 tars_label_name_map = {"O": "O",
                        "B-PER": "person", "I-PER": "person",
@@ -44,11 +44,17 @@ group_c = ["B-PERSON", "B-DATE", "B-MONEY", "B-LOC", "B-FAC", "B-PRODUCT",
 def load_corpus(dataset_name: str):
     dataset = _load_corpus(dataset_name)
     tags, index2tag, tag2index = _load_tag_mapping(dataset)
-    if dataset_name == "ontonotes_C":
-        index2tag = {k: v for k, v in index2tag.items() if v in group_c}
-        tag2index = {k: v for k, v in tag2index.items() if k in group_c}
-        tags.num_classes = len(group_c)
-        tags.names = [x for x in tags.names if x in group_c]
+    if dataset_name in ["ontonotes_C", "ontonotes_A", "ontonotes_B"]:
+        if dataset_name == "ontonotes_C":
+            _tags = group_c
+        elif dataset_name == "ontonotes_A":
+            _tags = group_a
+        elif dataset_name == "ontonotes_B":
+            _tags = group_b
+        index2tag = {k: v for k, v in index2tag.items() if v in _tags}
+        tag2index = {k: v for k, v in tag2index.items() if k in _tags}
+        tags.num_classes = len(_tags)
+        tags.names = [x for x in tags.names if x in _tags]
 
     return dataset, tags, index2tag, tag2index
 
@@ -178,8 +184,8 @@ def _load_corpus(dataset_name: str):
     if dataset_name == "arabic":
         dataset = dataset.map(split_arabic)
 
-    if dataset_name == "finnish":
-        dataset = dataset.map(convert_finnish_format)
+    if dataset_name in ["finnish", "conll"]:
+        dataset = dataset.map(convert_id_to_int)
 
     return dataset
 

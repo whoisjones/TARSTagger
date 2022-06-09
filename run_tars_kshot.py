@@ -30,8 +30,8 @@ def main(args):
     tars_id2tag = {v: k for k, v in tars_tag2id.items()}
     org_tag2tars_label, tars_label2org_tag = load_tars_mapping(tags)
 
-    label_id_mapping_train = load_label_id_mapping(train_dataset)
-    label_id_mapping_validation = load_label_id_mapping(validation_dataset)
+    label_id_mapping_train = load_label_id_mapping(train_dataset, tags, index2tag)
+    label_id_mapping_validation = load_label_id_mapping(validation_dataset, tags, index2tag)
 
     def align_predictions(predictions, label_ids):
         preds = np.argmax(predictions, axis=2)
@@ -342,7 +342,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--seed", type=int, default=10)
-    parser.add_argument("--k", type=list, default=[0,1,2,4,8,16,32,64])
+    parser.add_argument("--k", type=list, default=[1, 5])
     args = parser.parse_args()
 
     main(args)
