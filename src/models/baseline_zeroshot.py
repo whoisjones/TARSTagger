@@ -3,18 +3,16 @@ import os
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForTokenClassification
-from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
 import torch
 from seqeval.metrics import classification_report
 
-from src.corpora import load_corpus, split_dataset, load_label_id_mapping
-from src.models.metrics import compute_metrics
+from src.corpora import load_corpus, split_dataset
 from src.utils import tokenize_and_align_labels
 
 
-def baseline_kshot(args, run):
+def baseline_zeroshot(args, run):
 
     # set cuda device
     device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
