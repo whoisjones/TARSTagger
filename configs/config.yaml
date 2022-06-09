@@ -1,0 +1,19 @@
+# Hyperparameter configs
+
+cuda: false
+cuda_devices: "0"
+
+output_dir: test
+experiment: baseline
+
+runs: 10
+set_seed: False
+final_test: False
+
+language_model: xlm-roberta-large
+corpus: conll
+save_model: False
+train_batch_size: 4
+eval_batch_size: 16
+lr: 5e-5
+epochs: 10
