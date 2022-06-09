@@ -22,10 +22,10 @@ def baseline(args):
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
 
     # model
-    config = AutoConfig.from_pretrained(args.model, num_labels=tags.num_classes,
+    config = AutoConfig.from_pretrained(args.language_model, num_labels=tags.num_classes,
                                         id2label=index2tag, label2id=tag2index)
-    model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    model = AutoModelForTokenClassification.from_pretrained(args.language_model, config=config).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(args.language_model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     # preprocessing
@@ -36,7 +36,7 @@ def baseline(args):
         output_dir=args.output_dir,
         evaluation_strategy="epoch",
         save_strategy="no",
-        learning_rate=args.lr,
+        learning_rate=float(args.lr),
         per_device_train_batch_size=args.train_batch_size,
         per_device_eval_batch_size=args.eval_batch_size,
         num_train_epochs=args.epochs,

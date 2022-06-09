@@ -1,7 +1,7 @@
 from datasets import load_dataset
 
-from constants import *
-from processing import preprocess_corpus
+from .constants import *
+from .processing import preprocess_corpus
 
 def load_label_id_mapping(dataset, tags, index2tag):
     label2id = {idx: tars_label_name_map.get(tag) for idx, tag in enumerate(tags.names)}

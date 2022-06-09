@@ -1,5 +1,5 @@
 import datasets
-from constants import *
+from .constants import *
 
 
 def preprocess_corpus(**config):

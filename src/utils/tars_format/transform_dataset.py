@@ -1,6 +1,6 @@
 import random
 
-from tokenization import tokenize_and_align_tars_labels
+from .tokenization import tokenize_and_align_tars_labels
 
 
 def make_tars_datasets(

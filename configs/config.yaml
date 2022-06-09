@@ -1,16 +1,17 @@
 # Hyperparameter configs
 
+config: configs/config.yaml
 cuda: false
 cuda_devices: "0"
 
 output_dir: test
 experiment: baseline
 
-runs: 10
+runs: 1
 set_seed: False
 final_test: False
 
-language_model: xlm-roberta-large
+language_model: bert-base-cased
 corpus: conll
 save_model: False
 train_batch_size: 4

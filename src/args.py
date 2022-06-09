@@ -22,6 +22,8 @@ def read_config(path):
 
 def argparse_train():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, default="",
+                        help="Configration file (YAML) for all arguments, if empty, use command lines arguments")
     parser.add_argument("--cuda", type=bool, default=True, help="Whether to use CUDA or not.")
     parser.add_argument("--cuda_devices", type=str, default="0", help="If multiple devices are present, select which ones to train on.")
     parser.add_argument("--output_dir", type=str, help="Where to store the model")
