@@ -42,7 +42,7 @@ def argparse_train():
         "--language_model",
         type=str,
         default="xlm-roberta-large",
-        help="Pretrained language model name from huggingface hub.",
+        help="Pretrained language model name from huggingface hub or local path.",
     )
     parser.add_argument(
         "--corpus",
@@ -60,4 +60,8 @@ def argparse_train():
     parser.add_argument("--eval_batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--epochs", type=int, default=10)
+
+    parser.add_argument("--k", type=int, default=1)
+    parser.add_argument("--reuse_decoder_weights", type=bool, default=False)
+    parser.add_argument("--reuse_corpus_for_weights", type=str, default="conll")
     return parser.parse_args()

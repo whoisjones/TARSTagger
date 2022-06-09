@@ -22,7 +22,7 @@ available_datasets = {
 }
 
 # LABEL MAP FOR TART
-tars_label_name_map = {
+label_name_map = {
     "O": "O",
     "B-PER": "person",
     "I-PER": "person",

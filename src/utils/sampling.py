@@ -1,3 +1,5 @@
+import random
+
 def k_shot_sampling(k, mapping, seed):
     count = {label: 0 for label in mapping.keys()}
     total_examples = max([max(x) for x in mapping.values()])
@@ -37,6 +39,7 @@ def k_shot_sampling(k, mapping, seed):
                     break
 
     return k_shot_indices
+
 
 def k_shot_strict_sampling(k, mapping, seed):
     count = {label: 0 for label in mapping.keys()}

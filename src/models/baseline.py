@@ -9,14 +9,10 @@ from src.models.metrics import compute_metrics
 from src.utils import tokenize_and_align_labels
 
 
-def baseline(args):
+def baseline(args, run):
 
-    # set cuda device
-
-    device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
-    if device == "cuda":
-        import os
-        os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_devices
+    device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
+    output_dir = f"{args.output_dir}/run{run}"
 
     # load dataset
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
@@ -33,7 +29,7 @@ def baseline(args):
     train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
 
     training_arguments = TrainingArguments(
-        output_dir=args.output_dir,
+        output_dir=output_dir,
         evaluation_strategy="epoch",
         save_strategy="no",
         learning_rate=float(args.lr),
