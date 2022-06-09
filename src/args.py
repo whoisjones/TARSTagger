@@ -30,7 +30,7 @@ def argparse_train():
     parser.add_argument(
         "--experiment",
         type=str,
-        choices=["baseline", "baseline_kshot", "tars", "tars_kshot"],
+        choices=["baseline_pretrain", "baseline_kshot", "baseline_zeroshot", "tars_pretrain", "tars_kshot", "tars_zeroshot"],
         help="What experiment should be performed.",
     )
 

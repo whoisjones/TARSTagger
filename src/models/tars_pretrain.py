@@ -1,23 +1,22 @@
 import argparse
 
-from tqdm import tqdm
 from transformers import AutoModelForTokenClassification
 from transformers import AutoConfig, AutoTokenizer
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
 import torch
-from torch.utils.data import DataLoader
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from corpora import load_corpus, split_dataset, load_tars_mapping
 from preprocessing import make_tars_datasets
 
-def main(args):
+def main(args, run):
 
     # set cuda device
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
+    output_dir = f"{args.output_dir}/run{run}"
 
     # load dataset
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)

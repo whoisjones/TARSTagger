@@ -5,7 +5,7 @@ cuda: True
 cuda_devices: "1"
 
 output_dir: test_baseline
-experiment: baseline
+experiment: baseline_pretrain
 
 runs: 1
 set_seed: False
