@@ -1,6 +1,14 @@
 import random
 
-def k_shot_sampling(k, mapping, seed):
+def k_shot_sampling(k, mapping, seed, mode):
+    if mode == "soft":
+        return k_shot_soft_sampling(k, mapping, seed)
+    elif mode == "strict":
+        return k_shot_strict_sampling(k, mapping, seed)
+    else:
+        raise ValueError(f"Unknown sampling strategy: {mode}.")
+
+def k_shot_soft_sampling(k, mapping, seed):
     count = {label: 0 for label in mapping.keys()}
     total_examples = max([max(x) for x in mapping.values()])
 

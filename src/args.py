@@ -62,6 +62,7 @@ def argparse_train():
     parser.add_argument("--epochs", type=int, default=10)
 
     parser.add_argument("--k", type=int, default=1)
+    parser.add_argument("--sampling_mode", type=str, choices=["soft", "strict"], default="soft")
     parser.add_argument("--reuse_decoder_weights", type=bool, default=False)
     parser.add_argument("--reuse_corpus_for_weights", type=str, default="conll")
 

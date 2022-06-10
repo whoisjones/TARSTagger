@@ -20,6 +20,7 @@ lr: 5e-5
 epochs: 10
 
 k: 32
+sampling_mode: soft
 reuse_decoder_weights: True
 reuse_corpus_for_weights: conll
 

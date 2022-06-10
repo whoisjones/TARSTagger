@@ -39,8 +39,8 @@ def baseline_kshot(args, run):
     model.classifier = few_shot_classifier.to(device)
     model.num_labels = tags.num_classes
 
-    train_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run)
-    validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run)
+    train_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
+    validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
 
     train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
     train_dataset = train_dataset.select(train_kshot_indices)
