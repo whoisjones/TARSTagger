@@ -12,7 +12,7 @@ from src.utils import tokenize_and_align_labels
 
 def baseline_pretrain(args, run):
 
-    device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
+    device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}/run{run}"
 
     # load dataset

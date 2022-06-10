@@ -15,36 +15,37 @@ def k_shot_soft_sampling(k, mapping, seed):
     random.seed(seed)
 
     completed = False
+    idx = 0
+    k_shot_indices = []
     while not completed:
-        k_shot_indices = []
-        indices = list(range(0, total_examples))
-        random.shuffle(indices)
+        sample = random.randint(0, total_examples)
+        idx += 1
 
-        for sample in indices:
-            add = []
-            for label in count.keys():
-                if sample in mapping[label]:
-                    if count[label] + 1 < 2 * k:
-                        count[label] += 1
-                        add.append(True)
-                    else:
-                        add.append(False)
-                else:
-                    add.append(False)
+        if idx % total_examples == 0:
+            k_shot_indices = []
+            count = {label: 0 for label in mapping.keys()}
 
-            if any(add):
-                k_shot_indices.append(sample)
+        if all([c == k for c in count.values()]):
+            completed = True
+            continue
 
-                k_complete = []
-                for label in mapping.keys():
-                    if count[label] == len(mapping[label]) or count[label] >= k:
-                        k_complete.append(True)
-                    else:
-                        k_complete.append(False)
+        can_be_added = False
+        sample_has_labels = [sample in mapping[label] for label in count.keys()]
+        if any(sample_has_labels):
+            can_be_added = True
+            possible_indices = [i for i, x in enumerate(sample_has_labels) if x]
+            for i in possible_indices:
+                label = list(count.keys())[i]
+                if count[label] + 1 >= 2*k:
+                    can_be_added = False
 
-                if all(k_complete):
-                    completed = True
-                    break
+        if can_be_added:
+            k_shot_indices.append(sample)
+            for i in possible_indices:
+                label = list(count.keys())[i]
+                count[label] += 1
+        else:
+            continue
 
     return k_shot_indices
 
@@ -56,35 +57,36 @@ def k_shot_strict_sampling(k, mapping, seed):
     random.seed(seed)
 
     completed = False
+    idx = 0
+    k_shot_indices = []
     while not completed:
-        k_shot_indices = []
-        indices = list(range(0, total_examples))
-        random.shuffle(indices)
+        sample = random.randint(0, total_examples)
+        idx += 1
 
-        for sample in indices:
-            add = []
-            for label in count.keys():
-                if sample in mapping[label]:
-                    if count[label] + 1 <= k:
-                        count[label] += 1
-                        add.append(True)
-                    else:
-                        add.append(False)
-                else:
-                    add.append(False)
+        if idx % total_examples == 0:
+            k_shot_indices = []
+            count = {label: 0 for label in mapping.keys()}
 
-            if any(add):
-                k_shot_indices.append(sample)
+        if all([c == k for c in count.values()]):
+            completed = True
+            continue
 
-                k_complete = []
-                for label in mapping.keys():
-                    if count[label] == len(mapping[label]) or count[label] >= k:
-                        k_complete.append(True)
-                    else:
-                        k_complete.append(False)
+        can_be_added = False
+        sample_has_labels = [sample in mapping[label] for label in count.keys()]
+        if any(sample_has_labels):
+            can_be_added = True
+            possible_indices = [i for i, x in enumerate(sample_has_labels) if x]
+            for i in possible_indices:
+                label = list(count.keys())[i]
+                if count[label] + 1 > k:
+                    can_be_added = False
 
-                if all(k_complete):
-                    completed = True
-                    break
+        if can_be_added:
+            k_shot_indices.append(sample)
+            for i in possible_indices:
+                label = list(count.keys())[i]
+                count[label] += 1
+        else:
+            continue
 
     return k_shot_indices

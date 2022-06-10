@@ -4,14 +4,14 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: test_tars
-experiment: tars_pretrain
+output_dir: conll_tars_kshot
+experiment: tars_kshot
 
-runs: 1
-set_seed: False
+runs: 20
+#set_seed: False
 final_test: True
 
-language_model: bert-base-cased
+language_model: pretrained_models/tars_conll/run1
 corpus: conll
 save_model: False
 train_batch_size: 8
@@ -19,9 +19,9 @@ eval_batch_size: 16
 lr: 5e-5
 epochs: 10
 
-k: 32
-sampling_mode: soft
-reuse_decoder_weights: True
+k: 1
+sampling_mode: strict
+reuse_decoder_weights: False
 reuse_corpus_for_weights: conll
 
 num_negatives: all

@@ -15,7 +15,7 @@ from src.utils import tokenize_and_align_labels
 def baseline_zeroshot(args, run):
 
     # set cuda device
-    device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
+    device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}_0shot/run{run}"
 
     tokenizer = AutoTokenizer.from_pretrained(args.language_model)

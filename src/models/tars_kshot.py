@@ -20,11 +20,12 @@ from src.utils import k_shot_sampling
 def tars_kshot(args, run):
 
     # set cuda device
-    device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
-    output_dir = f"{args.output_dir}/run{run}"
+    device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
+    output_dir = f"{args.output_dir}_{args.k}shot/run{run}"
 
-    tokenizer = AutoTokenizer.from_pretrained(args.pretrained_model_path)
+    tokenizer = AutoTokenizer.from_pretrained(args.language_model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+    model = AutoModelForTokenClassification.from_pretrained(args.language_model).to(device)
 
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
     train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
@@ -32,8 +33,23 @@ def tars_kshot(args, run):
     tars_id2tag = {v: k for k, v in tars_tag2id.items()}
     org_tag2tars_label, tars_label2org_tag = load_tars_label_mapping(tags)
 
-    label_id_mapping_train = load_label_id_mapping(train_dataset, tags, index2tag)
-    label_id_mapping_validation = load_label_id_mapping(validation_dataset, tags, index2tag)
+    label_id_mapping_train = load_label_id_mapping(train_dataset, index2tag)
+    label_id_mapping_validation = load_label_id_mapping(validation_dataset, index2tag)
+
+    train_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
+    validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
+
+    kshot_train_dataset = train_dataset.select(train_kshot_indices)
+    kshot_validation_dataset = validation_dataset.select(validation_kshot_indices)
+
+    kshot_train_dataset, kshot_validation_dataset, test_dataset = make_tars_datasets(
+        datasets=[kshot_train_dataset, kshot_validation_dataset, test_dataset],
+        tokenizer=tokenizer,
+        index2tag=index2tag,
+        org_tag2tars_label=org_tag2tars_label,
+        tars_tag2id=tars_tag2id,
+        num_negatives=args.num_negatives
+    )
 
     def align_predictions(predictions, label_ids):
         preds = np.argmax(predictions, axis=2)
@@ -56,24 +72,6 @@ def tars_kshot(args, run):
         y_pred, y_true = align_predictions(eval_pred.predictions, eval_pred.label_ids)
         return {"classification_report": classification_report(y_true, y_pred),
                 "f1": f1_score(y_true, y_pred)}
-
-    model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
-    train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
-
-    train_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
-    validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
-
-    kshot_train_dataset = train_dataset.select(train_kshot_indices)
-    kshot_validation_dataset = validation_dataset.select(validation_kshot_indices)
-
-    kshot_train_dataset, kshot_validation_dataset, test_dataset = make_tars_datasets(
-        datasets=[kshot_train_dataset, kshot_validation_dataset, test_dataset],
-        tokenizer=tokenizer,
-        index2tag=index2tag,
-        org_tag2tars_label=org_tag2tars_label,
-        tars_tag2id=tars_tag2id,
-        num_negatives=args.num_negatives
-    )
 
     training_arguments = TrainingArguments(
         output_dir=output_dir,
@@ -113,7 +111,7 @@ def tars_kshot(args, run):
             test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
             shuffle=False,
             collate_fn=data_collator,
-            batch_size=args.batch_size
+            batch_size=args.eval_batch_size
         )
         return test_dataloader
 

@@ -13,7 +13,7 @@ from src.utils import tokenize_and_align_labels, k_shot_sampling
 def baseline_kshot(args, run):
 
     # set cuda device
-    device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
+    device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}_{args.k}shot/run{run}"
 
     tokenizer = AutoTokenizer.from_pretrained(args.language_model)

@@ -17,7 +17,7 @@ from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 def tars_zeroshot(args, run):
 
     # set cuda device
-    device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
+    device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}/run{run}"
 
     tokenizer = AutoTokenizer.from_pretrained(args.pretrained_model_path)
