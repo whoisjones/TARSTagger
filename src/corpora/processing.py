@@ -92,15 +92,16 @@ def _preprocess_tagset_extension(**config):
 
     _tags = config["dataset"]["train"].features["ner_tags"].feature
     _index2tag = {idx: tag for idx, tag in enumerate(_tags.names)}
+    _tag2index = {tag: idx for idx, tag in enumerate(_tags.names)}
 
     config["dataset"]["train"] = config["dataset"]["train"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
     config["dataset"]["validation"] = config["dataset"]["validation"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
     config["dataset"]["test"] = config["dataset"]["test"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
 
-    config["index2tag"] = {k: v for k, v in config["index2tag"].items() if v in tags}
-    config["tag2index"] = {k: v for k, v in config["tag2index"].items() if k in tags}
+    config["index2tag"] = {k: v for k, v in _index2tag.items() if v in tags}
+    config["tag2index"] = {k: v for k, v in _tag2index.items() if k in tags}
     config["tags"].num_classes = len(tags)
-    config["tags"].names = [x for x in config["tags"].names if x in tags]
+    config["tags"].names = [x for x in _tags.names if x in tags]
 
     return config
 

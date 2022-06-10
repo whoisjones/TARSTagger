@@ -4,17 +4,17 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: test_shap
+output_dir: ontonotesAB
 experiment: tars_pretrain
 
 runs: 1
 #set_seed: False
 final_test: True
 
-language_model: pretrained_models/tars_conll/run1
+language_model: bert-base-cased
 corpus: ontonotes_AB
-save_model: False
-train_batch_size: 8
+save_model: True
+train_batch_size: 16
 eval_batch_size: 16
 lr: 5e-5
 epochs: 10
