@@ -4,10 +4,10 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: conll_tars_kshot
-experiment: tars_kshot
+output_dir: conll_tars_zeroshot
+experiment: tars_zeroshot
 
-runs: 20
+runs: 1
 #set_seed: False
 final_test: True
 
