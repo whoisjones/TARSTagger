@@ -20,7 +20,7 @@ def tars_zeroshot(args, run):
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}_0shot/run{run}"
 
-    tokenizer = AutoTokenizer.from_pretrained(args.pretrained_model_path)
+    tokenizer = AutoTokenizer.from_pretrained(args.language_model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
@@ -29,14 +29,15 @@ def tars_zeroshot(args, run):
     tars_id2tag = {v: k for k, v in tars_tag2id.items()}
     org_tag2tars_label, tars_label2org_tag = load_tars_label_mapping(tags)
 
-    model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
+    model = AutoModelForTokenClassification.from_pretrained(args.language_model).to(device)
 
     _train, _val, test_dataset = make_tars_datasets(
         datasets=[train_dataset, validation_dataset, test_dataset],
         tokenizer=tokenizer,
         index2tag=index2tag,
         org_tag2tars_label=org_tag2tars_label,
-        tars_tag2id=tars_tag2id
+        tars_tag2id=tars_tag2id,
+        num_negatives=args.num_negatives
     )
 
     def get_test_dataloader(test_dataset):
