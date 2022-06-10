@@ -22,3 +22,5 @@ epochs: 10
 k: 32
 reuse_decoder_weights: True
 reuse_corpus_for_weights: conll
+
+num_negatives: all

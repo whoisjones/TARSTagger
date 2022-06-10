@@ -12,11 +12,11 @@ from torch.utils.data import DataLoader
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
-from corpora import load_corpus, split_dataset, load_tars_mapping, load_label_id_mapping
-from preprocessing import make_tars_datasets, k_shot_sampling
+from src.corpora import load_corpus, split_dataset
+from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 
 
-def main(args, run):
+def tars_kshot(args, run):
 
     # set cuda device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

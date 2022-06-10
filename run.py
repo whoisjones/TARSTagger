@@ -11,11 +11,11 @@ def run_train(args):
         elif args.experiment == "baseline_zeroshot":
             baseline_zeroshot(args, run)
         elif args.experiment == "tars_pretrain":
-            baseline_pretrain(args, run)
+            tars_pretrain(args, run)
         elif args.experiment == "tars_kshot":
-            baseline_kshot(args, run)
+            tars_kshot(args, run)
         elif args.experiment == "tars_zeroshot":
-            baseline_zeroshot(args, run)
+            tars_zeroshot(args, run)
         else:
             raise ValueError(f"Unknown experiment: {args.experiment}")
 

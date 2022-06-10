@@ -64,4 +64,6 @@ def argparse_train():
     parser.add_argument("--k", type=int, default=1)
     parser.add_argument("--reuse_decoder_weights", type=bool, default=False)
     parser.add_argument("--reuse_corpus_for_weights", type=str, default="conll")
+
+    parser.add_argument("--num_negatives", type=str, default="one")
     return parser.parse_args()

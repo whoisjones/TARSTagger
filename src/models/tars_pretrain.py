@@ -14,7 +14,7 @@ from seqeval.metrics import classification_report, f1_score
 from src.corpora import load_corpus, split_dataset
 from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 
-def main(args, run):
+def tars_pretrain(args, run):
 
     # set cuda device
     device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
@@ -30,10 +30,10 @@ def main(args, run):
     org_tag2tars_label, tars_label2org_tag = load_tars_label_mapping(tags)
 
     # model
-    config = AutoConfig.from_pretrained(args.model, num_labels=len(tars_tag2id),
+    config = AutoConfig.from_pretrained(args.language_model, num_labels=len(tars_tag2id),
                                         id2label=tars_id2tag, label2id=tars_tag2id)
-    model = AutoModelForTokenClassification.from_pretrained(args.model, config=config).to(device)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    model = AutoModelForTokenClassification.from_pretrained(args.language_model, config=config).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(args.language_model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     # preprocessing
@@ -42,7 +42,8 @@ def main(args, run):
         tokenizer=tokenizer,
         index2tag=index2tag,
         org_tag2tars_label=org_tag2tars_label,
-        tars_tag2id=tars_tag2id
+        tars_tag2id=tars_tag2id,
+        num_negatives=args.num_negatives
     )
 
     def align_predictions(predictions, label_ids):

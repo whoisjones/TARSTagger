@@ -5,7 +5,7 @@ from ...corpora.label_map import label_name_map
 
 
 def make_tars_datasets(
-    datasets: list, tokenizer, index2tag, org_tag2tars_label, tars_tag2id
+    datasets: list, tokenizer, index2tag, org_tag2tars_label, tars_tag2id, num_negatives
 ):
     """
 
@@ -29,7 +29,7 @@ def make_tars_datasets(
             index2tag=index2tag,
             org_tag2tars_label=org_tag2tars_label,
             tars_tag2id=tars_tag2id,
-            num_negatives="all" if dataset.split._name == "test" else 0,
+            num_negatives="all" if dataset.split._name == "test" else num_negatives,
         )
         tars_datasets.append(processed_dataset)
 
