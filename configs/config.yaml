@@ -4,17 +4,17 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: test_baseline
-experiment: baseline_zeroshot
+output_dir: test_tars
+experiment: tars_pretrain
 
 runs: 1
 set_seed: False
 final_test: True
 
-language_model: pretrained_models/baseline_conll/run1
+language_model: bert-base-cased
 corpus: conll
 save_model: False
-train_batch_size: 4
+train_batch_size: 8
 eval_batch_size: 16
 lr: 5e-5
 epochs: 10

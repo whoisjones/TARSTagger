@@ -1,6 +1,7 @@
 import random
 
 from .tokenization import tokenize_and_align_tars_labels
+from ...corpora.label_map import label_name_map
 
 
 def make_tars_datasets(
@@ -169,7 +170,7 @@ def _make_tars_dataset(
 
 
 def load_tars_label_mapping(tags):
-    org_tag2tars_label = {tag: tars_label_name_map.get(tag) for tag in tags.names}
+    org_tag2tars_label = {tag: label_name_map.get(tag) for tag in tags.names}
 
     tars_label2org_tag = {}
     for k, v in org_tag2tars_label.items():
