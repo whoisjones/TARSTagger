@@ -4,15 +4,15 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: conll_tars_zeroshot
-experiment: tars_zeroshot
+output_dir: test_shap
+experiment: tars_pretrain
 
 runs: 1
 #set_seed: False
 final_test: True
 
 language_model: pretrained_models/tars_conll/run1
-corpus: conll
+corpus: ontonotes_AB
 save_model: False
 train_batch_size: 8
 eval_batch_size: 16

@@ -22,15 +22,9 @@ def _load_corpus(dataset_name: str):
 
 def load_corpus(dataset_name: str):
     dataset = _load_corpus(dataset_name)
-    tags = dataset["train"].features["ner_tags"].feature
-    index2tag = {idx: tag for idx, tag in enumerate(tags.names)}
-    tag2index = {tag: idx for idx, tag in enumerate(tags.names)}
     config = preprocess_corpus(
         dataset=dataset,
         dataset_name=dataset_name,
-        tags=tags,
-        index2tag=index2tag,
-        tag2index=tag2index,
     )
     return config["dataset"], config["tags"], config["index2tag"], config["tag2index"]
 

@@ -23,6 +23,10 @@ def preprocess_corpus(**config):
     if config["dataset_name"] in ["finnish", "conll"]:
         config = _preprocess_id_to_int(**config)
 
+    config["tags"] = config["dataset"]["train"].features["ner_tags"].feature
+    config["index2tag"] = {idx: tag for idx, tag in enumerate(config["tags"].names)}
+    config["tag2index"] = {tag: idx for idx, tag in enumerate(config["tags"].names)}
+
     return config
 
 
@@ -129,6 +133,7 @@ def _preprocess_fewnerd(**config):
     )
     for split, feature in features.items():
         config["dataset"][split].features["ner_tags"] = feature
+
     return config
 
 
