@@ -90,15 +90,12 @@ def _preprocess_tagset_extension(**config):
     elif config["dataset_name"] == "ontonotes_C":
         tags = group_c
 
-    def tag_transform(example):
-        example["ner_tags"] = [
-            x if config["index2tag"][x] in tags else 0 for x in example["ner_tags"]
-        ]
-        return example
+    _tags = config["dataset"]["train"].features["ner_tags"].feature
+    _index2tag = {idx: tag for idx, tag in enumerate(_tags.names)}
 
-    config["dataset"]["train"] = config["dataset"]["train"].map(tag_transform)
-    config["dataset"]["validation"] = config["dataset"]["validation"].map(tag_transform)
-    config["dataset"]["test"] = config["dataset"]["test"].map(tag_transform)
+    config["dataset"]["train"] = config["dataset"]["train"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
+    config["dataset"]["validation"] = config["dataset"]["validation"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
+    config["dataset"]["test"] = config["dataset"]["test"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
 
     config["index2tag"] = {k: v for k, v in config["index2tag"].items() if v in tags}
     config["tag2index"] = {k: v for k, v in config["tag2index"].items() if k in tags}
