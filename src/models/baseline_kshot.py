@@ -16,7 +16,7 @@ def baseline_kshot(args, run):
     device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}_{args.k}shot/run{run}"
 
-    tokenizer = AutoTokenizer.from_pretrained(args.pretrained_model_path)
+    tokenizer = AutoTokenizer.from_pretrained(args.language_model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
@@ -24,10 +24,10 @@ def baseline_kshot(args, run):
     tokenized_dataset = dataset.map(lambda p: tokenize_and_align_labels(p, tokenizer), batched=True)
     train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
 
-    label_id_mapping_train = load_label_id_mapping(train_dataset)
-    label_id_mapping_validation = load_label_id_mapping(validation_dataset)
+    label_id_mapping_train = load_label_id_mapping(train_dataset, tags, index2tag)
+    label_id_mapping_validation = load_label_id_mapping(validation_dataset, tags, index2tag)
 
-    model = AutoModelForTokenClassification.from_pretrained(args.pretrained_model_path).to(device)
+    model = AutoModelForTokenClassification.from_pretrained(args.language_model).to(device)
     few_shot_classifier = torch.nn.Linear(in_features=model.classifier.in_features,
                                           out_features=tags.num_classes).to(device)
     if args.reuse_decoder_weights:
@@ -73,8 +73,8 @@ def baseline_kshot(args, run):
         evaluation_strategy="epoch",
         save_strategy="no",
         learning_rate=float(args.lr),
-        per_device_train_batch_size=args.batch_size,
-        per_device_eval_batch_size=args.batch_size,
+        per_device_train_batch_size=args.train_batch_size,
+        per_device_eval_batch_size=args.eval_batch_size,
         num_train_epochs=args.epochs,
     )
 

@@ -5,16 +5,20 @@ cuda: True
 cuda_devices: "1"
 
 output_dir: test_baseline
-experiment: baseline_pretrain
+experiment: baseline_zeroshot
 
 runs: 1
 set_seed: False
 final_test: True
 
-language_model: bert-base-cased
+language_model: pretrained_models/baseline_conll/run1
 corpus: conll
 save_model: False
-train_batch_size: 8
+train_batch_size: 4
 eval_batch_size: 16
 lr: 5e-5
 epochs: 10
+
+k: 32
+reuse_decoder_weights: True
+reuse_corpus_for_weights: conll

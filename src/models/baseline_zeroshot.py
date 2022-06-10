@@ -18,7 +18,7 @@ def baseline_zeroshot(args, run):
     device = f"cuda{':' + args.cuda_devices}" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}_0shot/run{run}"
 
-    tokenizer = AutoTokenizer.from_pretrained(args.pretrained_model_path)
+    tokenizer = AutoTokenizer.from_pretrained(args.language_model)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     dataset, tags, index2tag, tag2index = load_corpus(args.corpus)
@@ -34,6 +34,7 @@ def baseline_zeroshot(args, run):
         with torch.no_grad():
             for _idx, _tag in reuse_idx2tag.items():
                 if _tag in tag2index:
+                    assert _idx >= model.classifier.weight.shape[0], "mismatch between shape of pretrained model and new classifier head."
                     few_shot_classifier.weight[tag2index[_tag]] = model.classifier.weight[_idx]
     model.classifier = few_shot_classifier.to(device)
     model.num_labels = tags.num_classes
