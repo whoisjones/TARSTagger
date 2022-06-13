@@ -28,7 +28,7 @@ def tars_IOscheme_zeroshot(args, run):
     def to_IO_scheme(example):
         example["ner_tags"] = [x if not index2tag.get(x).startswith("B-") else tag2index.get("I-" + index2tag.get(x)[2:]) for x in example["ner_tags"]]
         return example
-    dataset.map(to_IO_scheme)
+    dataset = dataset.map(to_IO_scheme)
 
     train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
     tars_tag2id = {'O': 0, 'I-': 1}

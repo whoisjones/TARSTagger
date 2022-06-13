@@ -26,7 +26,7 @@ def tars_IOscheme_pretrain(args, run):
     def to_IO_scheme(example):
         example["ner_tags"] = [x if not index2tag.get(x).startswith("B-") else tag2index.get("I-" + index2tag.get(x)[2:]) for x in example["ner_tags"]]
         return example
-    dataset.map(to_IO_scheme)
+    dataset = dataset.map(to_IO_scheme)
 
     train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
 

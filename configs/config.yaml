@@ -5,7 +5,7 @@ cuda: True
 cuda_devices: "1"
 
 output_dir: pretrained_models/ontonotes_AB_IOscheme
-experiment: tars_pretain_IOscheme
+experiment: tars_IOscheme_pretrain
 
 runs: 1
 #set_seed: False
