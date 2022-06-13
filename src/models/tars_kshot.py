@@ -39,8 +39,8 @@ def tars_kshot(args, run):
     train_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
     validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
 
-    kshot_train_dataset = train_dataset.select(train_kshot_indices)
-    kshot_validation_dataset = validation_dataset.select(validation_kshot_indices)
+    kshot_train_dataset = train_dataset.filter(lambda example: example["id"] in train_kshot_indices)
+    kshot_validation_dataset = validation_dataset.filter(lambda example: example["id"] in validation_kshot_indices)
 
     kshot_train_dataset, kshot_validation_dataset, test_dataset = make_tars_datasets(
         datasets=[kshot_train_dataset, kshot_validation_dataset, test_dataset],

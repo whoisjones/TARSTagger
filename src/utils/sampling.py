@@ -52,7 +52,7 @@ def k_shot_soft_sampling(k, mapping, seed):
 
 def k_shot_strict_sampling(k, mapping, seed):
     count = {label: 0 for label in mapping.keys()}
-    total_examples = max([max(x) for x in mapping.values()])
+    total_examples = list(set([x for s in mapping.values() for x in s]))
 
     random.seed(seed)
 
@@ -60,10 +60,10 @@ def k_shot_strict_sampling(k, mapping, seed):
     idx = 0
     k_shot_indices = []
     while not completed:
-        sample = random.randint(0, total_examples)
+        sample = random.sample(total_examples, 1)[0]
         idx += 1
 
-        if idx % total_examples == 0:
+        if idx % len(total_examples) == 0:
             k_shot_indices = []
             count = {label: 0 for label in mapping.keys()}
 

@@ -111,31 +111,16 @@ def _make_tars_dataset(
                 output_tars_label.append(positive_label)
                 output_label_lengths.append(len(tars_label_prefix))
 
-            negative_samples = list(
-                all_tars_labels.symmetric_difference(set(tars_labels))
-            )
-            if len(negative_samples) > 0 and num_negatives == "one":
-                negative_label = random.sample(negative_samples, 1).pop()
-                tars_label_prefix = negative_label.split() + [tokenizer.sep_token]
-                tars_tokens = tars_label_prefix + original_tokens
-                filtered_tars_tags = [
-                    tars_tag2id.get(tars_tag) for tars_tag in ["O"] * len(tars_tokens)
-                ]
-
-                output_ids.append(idx)
-                output_original_tags.append(original_tags)
-                output_tars_formatted_tokens.append(tars_tokens)
-                output_tars_formatted_tags.append(filtered_tars_tags)
-                output_tars_label.append(negative_label)
-                output_label_lengths.append(len(tars_label_prefix))
-
-            elif len(negative_samples) > 0 and num_negatives == "all":
-                for negative_label in negative_samples:
+            if not num_negatives == "none":
+                negative_samples = list(
+                    all_tars_labels.symmetric_difference(set(tars_labels))
+                )
+                if len(negative_samples) > 0 and num_negatives == "one":
+                    negative_label = random.sample(negative_samples, 1).pop()
                     tars_label_prefix = negative_label.split() + [tokenizer.sep_token]
                     tars_tokens = tars_label_prefix + original_tokens
                     filtered_tars_tags = [
-                        tars_tag2id.get(tars_tag)
-                        for tars_tag in ["O"] * len(tars_tokens)
+                        tars_tag2id.get(tars_tag) for tars_tag in ["O"] * len(tars_tokens)
                     ]
 
                     output_ids.append(idx)
@@ -144,6 +129,22 @@ def _make_tars_dataset(
                     output_tars_formatted_tags.append(filtered_tars_tags)
                     output_tars_label.append(negative_label)
                     output_label_lengths.append(len(tars_label_prefix))
+
+                elif len(negative_samples) > 0 and num_negatives == "all":
+                    for negative_label in negative_samples:
+                        tars_label_prefix = negative_label.split() + [tokenizer.sep_token]
+                        tars_tokens = tars_label_prefix + original_tokens
+                        filtered_tars_tags = [
+                            tars_tag2id.get(tars_tag)
+                            for tars_tag in ["O"] * len(tars_tokens)
+                        ]
+
+                        output_ids.append(idx)
+                        output_original_tags.append(original_tags)
+                        output_tars_formatted_tokens.append(tars_tokens)
+                        output_tars_formatted_tags.append(filtered_tars_tags)
+                        output_tars_label.append(negative_label)
+                        output_label_lengths.append(len(tars_label_prefix))
 
         return {
             "id": output_ids,

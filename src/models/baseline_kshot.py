@@ -43,8 +43,8 @@ def baseline_kshot(args, run):
     validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
 
     train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
-    train_dataset = train_dataset.select(train_kshot_indices)
-    validation_dataset = validation_dataset.select(validation_kshot_indices)
+    train_dataset = train_dataset.filter(lambda example: example["id"] in train_kshot_indices)
+    validation_dataset = validation_dataset.filter(lambda example: example["id"] in validation_kshot_indices)
 
     def align_predictions(predictions, label_ids):
         preds = np.argmax(predictions, axis=2)

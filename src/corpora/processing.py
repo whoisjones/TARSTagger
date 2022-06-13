@@ -23,9 +23,10 @@ def preprocess_corpus(**config):
     if config["dataset_name"] in ["finnish", "conll"]:
         config = _preprocess_id_to_int(**config)
 
-    config["tags"] = config["dataset"]["train"].features["ner_tags"].feature
-    config["index2tag"] = {idx: tag for idx, tag in enumerate(config["tags"].names)}
-    config["tag2index"] = {tag: idx for idx, tag in enumerate(config["tags"].names)}
+    if not config["dataset_name"] in tagset_extension_datasets:
+        config["tags"] = config["dataset"]["train"].features["ner_tags"].feature
+        config["index2tag"] = {idx: tag for idx, tag in enumerate(config["tags"].names)}
+        config["tag2index"] = {tag: idx for idx, tag in enumerate(config["tags"].names)}
 
     return config
 
@@ -77,31 +78,39 @@ def _preprocess_tagset_extension(**config):
     :param config: key-value pairs consisting out of dataset, dataset_name, tags, index2tag and tag2index
     :return: processed config key-value pair
     """
+    import copy
+    _tags_template = copy.deepcopy(config["dataset"]["train"].features["ner_tags"].feature)
+    _full_tags = config["dataset"]["train"].features["ner_tags"].feature
+    _full_index2tag = {idx: tag for idx, tag in enumerate(_tags_template.names)}
+    _full_tag2index = {tag: idx for idx, tag in enumerate(_tags_template.names)}
+
     if config["dataset_name"] == "ontonotes_AB":
-        tags = group_a + group_b
+        _tags_template.names = list(set(group_a + group_b))
+        _tags_template.num_classes = len(list(set(group_a + group_b)))
     elif config["dataset_name"] == "ontonotes_BC":
-        tags = group_b + group_c
+        _tags_template.names = list(set(group_b + group_c))
+        _tags_template.num_classes = len(list(set(group_b + group_c)))
     elif config["dataset_name"] == "ontonotes_AC":
-        tags = group_a + group_c
+        _tags_template.names = list(set(group_a + group_c))
+        _tags_template.num_classes = len(list(set(group_a + group_c)))
     elif config["dataset_name"] == "ontonotes_A":
-        tags = group_a
+        _tags_template.names = list(set(group_a))
+        _tags_template.num_classes = len(group_a)
     elif config["dataset_name"] == "ontonotes_B":
-        tags = group_b
+        _tags_template.names = list(set(group_b))
+        _tags_template.num_classes = len(list(set(group_b)))
     elif config["dataset_name"] == "ontonotes_C":
-        tags = group_c
+        _tags_template.names = list(set(group_c))
+        _tags_template.num_classes = len(list(set(group_c)))
 
-    _tags = config["dataset"]["train"].features["ner_tags"].feature
-    _index2tag = {idx: tag for idx, tag in enumerate(_tags.names)}
-    _tag2index = {tag: idx for idx, tag in enumerate(_tags.names)}
+    config["tags"], config["dataset"]["train"].features["ner_tags"].feature = _tags_template, _tags_template
 
-    config["dataset"]["train"] = config["dataset"]["train"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
-    config["dataset"]["validation"] = config["dataset"]["validation"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
-    config["dataset"]["test"] = config["dataset"]["test"].filter(lambda example: all([elem in tags for elem in [_index2tag.get(x) for x in example["ner_tags"]]]))
+    config["index2tag"] = {k: v for k, v in _full_index2tag.items() if v in config["tags"].names}
+    config["tag2index"] = {v: k for k, v in _full_index2tag.items() if v in config["tags"].names}
 
-    config["index2tag"] = {k: v for k, v in _index2tag.items() if v in tags}
-    config["tag2index"] = {k: v for k, v in _tag2index.items() if k in tags}
-    config["tags"].num_classes = len(tags)
-    config["tags"].names = [x for x in _tags.names if x in tags]
+    config["dataset"]["train"] = config["dataset"]["train"].filter(lambda example: all([elem in config["tags"].names for elem in [_full_index2tag.get(x) for x in example["ner_tags"]]]))
+    config["dataset"]["validation"] = config["dataset"]["validation"].filter(lambda example: all([elem in config["tags"].names for elem in [_full_index2tag.get(x) for x in example["ner_tags"]]]))
+    config["dataset"]["test"] = config["dataset"]["test"].filter(lambda example: all([elem in config["tags"].names for elem in [_full_index2tag.get(x) for x in example["ner_tags"]]]))
 
     return config
 

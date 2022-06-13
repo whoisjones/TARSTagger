@@ -109,7 +109,7 @@ def tars_pretrain(args, run):
                 test_dataset.remove_columns(["id", "ner_tags", "tars_tags", "tars_label_length", "tars_labels"]),
                 shuffle=False,
                 collate_fn=data_collator,
-                batch_size=args.batch_size
+                batch_size=args.eval_batch_size
             )
             return test_dataloader
 
