@@ -4,24 +4,24 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: tagsetC2
-experiment: tars_kshot
+output_dir: pretrained_model/ontonotesBC_allnegatives
+experiment: tars_pretrain
 
 runs: 1
 #set_seed: False
 final_test: True
 
-language_model: ontonotesAB/run0
-corpus: ontonotes_C
-save_model: False
-train_batch_size: 4
-eval_batch_size: 16
-lr: 4e-5
-epochs: 30
+language_model: bert-base-cased
+corpus: ontonotes_BC
+save_model: True
+train_batch_size: 32
+eval_batch_size: 32
+lr: 5e-5
+epochs: 10
 
 k: 2
 sampling_mode: strict
 reuse_decoder_weights: False
 reuse_corpus_for_weights: conll
 
-num_negatives: none
+num_negatives: all

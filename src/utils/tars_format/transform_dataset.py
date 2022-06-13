@@ -1,7 +1,7 @@
 import random
 
 from .tokenization import tokenize_and_align_tars_labels
-from ...corpora.label_map import label_name_map
+from ...corpora.constants import label_name_map, chinese_name_map, arabic_name_map
 
 
 def make_tars_datasets(
@@ -172,6 +172,23 @@ def _make_tars_dataset(
 
 def load_tars_label_mapping(tags):
     org_tag2tars_label = {tag: label_name_map.get(tag) for tag in tags.names}
+
+    tars_label2org_tag = {}
+    for k, v in org_tag2tars_label.items():
+        tars_label2org_tag[v] = tars_label2org_tag.get(v, []) + [k]
+
+    return org_tag2tars_label, tars_label2org_tag
+
+def load_tars_cross_lingual_label_mapping(tags, corpus):
+    if corpus.startswith("ontonotes"):
+        _label_name_map = {k: v for k, v in label_name_map.items() if k in chinese_name_map.keys()}
+    elif corpus.startswith("chinese"):
+        _label_name_map = chinese_name_map
+    elif corpus.startswith("arabic"):
+        _label_name_map = arabic_name_map
+    else:
+        raise ValueError("unknown language.")
+    org_tag2tars_label = {tag: _label_name_map.get(tag) for tag in tags.names}
 
     tars_label2org_tag = {}
     for k, v in org_tag2tars_label.items():

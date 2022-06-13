@@ -19,6 +19,12 @@ available_datasets = {
     "ontonotes_A": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
     "ontonotes_B": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
     "ontonotes_C": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+    "ontonotes_15": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+    "arabic_15": {dataset_key: "conll2012_ontonotesv5", subset_key: "arabic_v4"},
+    "chinese_15": {dataset_key: "conll2012_ontonotesv5", subset_key: "chinese_v4"},
+    "ontonotes_3": {dataset_key: "conll2012_ontonotesv5", subset_key: "english_v12"},
+    "arabic_3": {dataset_key: "conll2012_ontonotesv5", subset_key: "arabic_v4"},
+    "chinese_3": {dataset_key: "conll2012_ontonotesv5", subset_key: "chinese_v4"},
 }
 
 # LABEL MAP FOR TART
@@ -67,6 +73,110 @@ label_name_map = {
     "B-DATE": "date",
     "I-DATE": "date",
 }
+
+# CROSS LINGUAL MAP
+chinese_name_map = {
+    "O": "O",
+    "B-PER": "人",
+    "I-PER": "人",
+    "B-ORG": "组织",
+    "I-ORG": "组织",
+    "B-LOC": "地点",
+    "I-LOC": "地点",
+    "B-MISC": "各种各样的",
+    "I-MISC": "各种各样的",
+    "B-PERSON": "人",
+    "I-PERSON": "人",
+    "B-FAC": "建造",
+    "I-FAC": "建造",
+    "B-CARDINAL": "红衣主教",
+    "I-CARDINAL": "红衣主教",
+    "B-EVENT": "事件",
+    "I-EVENT": "事件",
+    "B-GPE": "地缘政治",
+    "I-GPE": "地缘政治",
+    "B-LANGUAGE": "语",
+    "I-LANGUAGE": "语",
+    "B-LAW": "法律",
+    "I-LAW": "法律",
+    "B-MONEY": "钱",
+    "I-MONEY": "钱",
+    "B-NORP": "联系",
+    "I-NORP": "联系",
+    "B-ORDINAL": "序数",
+    "I-ORDINAL": "序数",
+    "B-PERCENT": "百分比",
+    "I-PERCENT": "百分比",
+    "B-PRODUCT": "产品",
+    "I-PRODUCT": "产品",
+    "B-QUANTITY": "数量",
+    "I-QUANTITY": "数量",
+    "B-TIME": "时间",
+    "I-TIME": "时间",
+    "B-WORK_OF_ART": "艺术",
+    "I-WORK_OF_ART": "艺术",
+    "B-PRO": "产品",
+    "I-PRO": "产品",
+    "B-DATE": "日期",
+    "I-DATE": "日期",
+}
+
+arabic_name_map = {
+    "O": "O",
+    "B-PER": "شخص",
+    "I-PER": "شخص",
+    "B-ORG": "منظمة",
+    "I-ORG": "منظمة",
+    "B-LOC": "موقعك",
+    "I-LOC": "موقعك",
+    "B-MISC": "متفرقات",
+    "I-MISC": "متفرقات",
+    "B-PERSON": "شخص",
+    "I-PERSON": "شخص",
+    "B-FAC": "بناء",
+    "I-FAC": "بناء",
+    "B-CARDINAL": "أساسي",
+    "I-CARDINAL": "أساسي",
+    "B-EVENT": "حدث",
+    "I-EVENT": "حدث",
+    "B-GPE": "الجيوسياسية",
+    "I-GPE": "الجيوسياسية",
+    "B-LANGUAGE": "لغة",
+    "I-LANGUAGE": "لغة",
+    "B-LAW": "قانون",
+    "I-LAW": "قانون",
+    "B-MONEY": "مال",
+    "I-MONEY": "مال",
+    "B-NORP": "الانتماء",
+    "I-NORP": "الانتماء",
+    "B-ORDINAL": "ترتيبي",
+    "I-ORDINAL": "ترتيبي",
+    "B-PERCENT": "النسبة المئوية",
+    "I-PERCENT": "النسبة المئوية",
+    "B-PRODUCT": "منتج",
+    "I-PRODUCT": "منتج",
+    "B-QUANTITY": "كمية",
+    "I-QUANTITY": "كمية",
+    "B-TIME": "زمن",
+    "I-TIME": "زمن",
+    "B-WORK_OF_ART": "فن",
+    "I-WORK_OF_ART": "فن",
+    "B-PRO": "منتج",
+    "I-PRO": "منتج",
+    "B-DATE": "تاريخ",
+    "I-DATE": "تاريخ",
+}
+
+# CROSS LINGUAL
+cross_lingual_eval_tags = [
+    "B-PERSON",
+    "I-PERSON",
+    "B-ORG",
+    "I-ORG",
+    "B-LOC",
+    "I-LOC",
+    "O"
+]
 
 # TAG SET EXTENSION GROUPS AS IN YANG (2020)
 group_a = [
@@ -120,6 +230,8 @@ standard_datasets = ["conll", "spanish", "dutch", "finnish"]
 
 fewnerd_datasets = ["fewnerd-inter", "fewnerd-intra", "fewnerd-supervised"]
 
+ontonotes_datasets = ["ontonotes", "arabic", "chinese"]
+cross_lingual_ontonotes_datasets = ["ontonotes_14", "arabic_14", "chinese_14", "ontonotes_4", "arabic_4", "chinese_4"]
 tagset_extension_datasets = [
     "ontonotes_AB",
     "ontonotes_AC",
@@ -127,7 +239,5 @@ tagset_extension_datasets = [
     "ontonotes_A",
     "ontonotes_B",
     "ontonotes_C",
-]
-
-cross_lingual_ontonotes_datasets = ["ontonotes", "arabic", "chinese"]
-all_ontonotes = cross_lingual_ontonotes_datasets + tagset_extension_datasets
+] + cross_lingual_ontonotes_datasets
+all_ontonotes = ontonotes_datasets + tagset_extension_datasets

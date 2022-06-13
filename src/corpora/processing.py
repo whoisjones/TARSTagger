@@ -102,6 +102,14 @@ def _preprocess_tagset_extension(**config):
     elif config["dataset_name"] == "ontonotes_C":
         _tags_template.names = list(set(group_c))
         _tags_template.num_classes = len(list(set(group_c)))
+    elif config["dataset_name"] in ["ontonotes_15", "chinese_15", "arabic_15"]:
+        _labels = [tag for tag in _full_tags.names if tag not in cross_lingual_eval_tags]
+        _labels.append("O")
+        _tags_template.names = list(_labels)
+        _tags_template.num_classes = len(_labels)
+    elif config["dataset_name"] in ["ontonotes_3", "chinese_3", "arabic_3"]:
+        _tags_template.names = cross_lingual_eval_tags
+        _tags_template.num_classes = len(cross_lingual_eval_tags)
 
     config["tags"], config["dataset"]["train"].features["ner_tags"].feature = _tags_template, _tags_template
 

@@ -1,6 +1,3 @@
-from .constants import label_name_map
-
-
 def load_label_id_mapping(dataset, index2tag):
     label2id = {v: [] for k, v in index2tag.items()}
 
