@@ -9,43 +9,44 @@ def k_shot_sampling(k, mapping, seed, mode):
         raise ValueError(f"Unknown sampling strategy: {mode}.")
 
 def k_shot_soft_sampling(k, mapping, seed):
+    sorted_mapping = {key: val for key, val in sorted(mapping.items(), key=lambda item: len(item[1]))}
     count = {label: 0 for label in mapping.keys()}
-    total_examples = max([max(x) for x in mapping.values()])
+    k_shot_indices = []
 
     random.seed(seed)
 
     completed = False
-    idx = 0
-    k_shot_indices = []
     while not completed:
-        sample = random.randint(0, total_examples)
-        idx += 1
 
-        if idx % total_examples == 0:
-            k_shot_indices = []
-            count = {label: 0 for label in mapping.keys()}
+        for label_key, sentence_ids in sorted_mapping.items():
 
-        if all([c == k for c in count.values()]):
-            completed = True
-            continue
+            if completed:
+                break
 
-        can_be_added = False
-        sample_has_labels = [sample in mapping[label] for label in count.keys()]
-        if any(sample_has_labels):
-            can_be_added = True
-            possible_indices = [i for i, x in enumerate(sample_has_labels) if x]
-            for i in possible_indices:
-                label = list(count.keys())[i]
-                if count[label] + 1 >= 2*k:
-                    can_be_added = False
+            if not k > len(sentence_ids):
+                samples_for_label = random.sample(sentence_ids, k)
+            else:
+                samples_for_label = random.sample(sentence_ids, len(sentence_ids))
 
-        if can_be_added:
-            k_shot_indices.append(sample)
-            for i in possible_indices:
-                label = list(count.keys())[i]
-                count[label] += 1
-        else:
-            continue
+            for sentence_id in samples_for_label:
+                labels_to_be_considered = [_key for _key, _vals in mapping.items() if sentence_id in _vals]
+                if all([True if count[label] < k else False for label in labels_to_be_considered]):
+                    k_shot_indices.append(sentence_id)
+                    for label in labels_to_be_considered:
+                        count[label] += 1
+
+                    if all([c >= k for c in count.values()]):
+                        completed = True
+                        break
+
+                elif count[label_key] < 2*k and any([True if count[label] < k else False for label in labels_to_be_considered]):
+                    k_shot_indices.append(sentence_id)
+                    for label in labels_to_be_considered:
+                        count[label] += 1
+
+                    if all([c >= k for c in count.values()]):
+                        completed = True
+                        break
 
     return k_shot_indices
 
