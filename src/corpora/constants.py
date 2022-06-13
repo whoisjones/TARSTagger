@@ -231,7 +231,7 @@ standard_datasets = ["conll", "spanish", "dutch", "finnish"]
 fewnerd_datasets = ["fewnerd-inter", "fewnerd-intra", "fewnerd-supervised"]
 
 ontonotes_datasets = ["ontonotes", "arabic", "chinese"]
-cross_lingual_ontonotes_datasets = ["ontonotes_14", "arabic_14", "chinese_14", "ontonotes_4", "arabic_4", "chinese_4"]
+cross_lingual_ontonotes_datasets = ["ontonotes_15", "arabic_15", "chinese_15", "ontonotes_3", "arabic_3", "chinese_3"]
 tagset_extension_datasets = [
     "ontonotes_AB",
     "ontonotes_AC",
