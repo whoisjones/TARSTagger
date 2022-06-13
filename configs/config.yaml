@@ -4,7 +4,7 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: test_kshot_sampling
+output_dir: debug
 experiment: tars_kshot
 
 runs: 1
@@ -14,8 +14,8 @@ final_test: True
 language_model: bert-base-cased
 corpus: ontonotes_A
 save_model: False
-train_batch_size: 8
-eval_batch_size: 8
+train_batch_size: 32
+eval_batch_size: 32
 lr: 5e-5
 epochs: 10
 

@@ -4,7 +4,28 @@ import json
 import numpy as np
 import pandas as pd
 
-def evaluate():
+def evaluate(directory):
+    micro_f1 = []
+    macro_f1 = []
+    weighted = []
+    for run in os.listdir(directory):
+        with open(f"{directory}/{run}/results.txt") as f:
+            for line in f.readlines():
+                if "micro avg" in line:
+                    micro_f1.append(float(line.split()[-2]))
+                if "macro avg" in line:
+                    macro_f1.append(float(line.split()[-2]))
+                if "weighted avg" in line:
+                    weighted.append(float(line.split()[-2]))
+    print(f"micro avg: {round(np.average(micro_f1) * 100, 2)} \n"
+          f"micro std: {round(np.std(micro_f1) * 100, 2)} \n"
+          f"macro avg: {round(np.average(macro_f1) * 100, 2)} \n"
+          f"macro std: {round(np.std(macro_f1) * 100, 2)} \n"
+          f"weigh avg: {round(np.average(weighted) * 100, 2)} \n"
+          f"weigh std: {round(np.std(weighted) * 100, 2)} \n"
+          )
+
+def evaluate_to_latex():
     directories = list(filter(lambda x: "shot" in x, os.listdir("resources")))
     directories = sorted(directories, key=lambda x: (x.split("_")[0], x.split("_")[1], int(re.findall(r'\d+', x.split("_")[-1]).pop())))
 
@@ -78,6 +99,3 @@ def evaluate():
         df[name] = [f"{results[kshot]['weighted avg']} pm {results[kshot]['weighted std']}" for kshot in kshots]
 
     print(df.to_latex(index=False))
-
-if __name__ == "__main__":
-    evaluate()
