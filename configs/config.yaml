@@ -4,22 +4,22 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: debug
+output_dir: tag_set_ext_A
 experiment: tars_kshot
 
-runs: 1
+runs: 5
 #set_seed: False
 final_test: True
 
-language_model: bert-base-cased
+language_model: pretrained_models/ontonotesBC_1negative/run0
 corpus: ontonotes_A
 save_model: False
-train_batch_size: 32
-eval_batch_size: 32
+train_batch_size: 4
+eval_batch_size: 16
 lr: 5e-5
-epochs: 10
+epochs: 50
 
-k: 5
+k: 1
 sampling_mode: soft
 reuse_decoder_weights: False
 reuse_corpus_for_weights: conll

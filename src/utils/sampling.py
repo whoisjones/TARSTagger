@@ -36,7 +36,7 @@ def k_shot_soft_sampling(k, mapping, seed):
                     for label in labels_to_be_considered:
                         count[label] += 1
 
-                    if all([c >= min(1, lb) for c, lb in zip(count.values(), lower_bounds.values())]):
+                    if all([c >= min(c, lb) for c, lb in zip(count.values(), lower_bounds.values())]):
                         completed = True
                         break
 
@@ -45,7 +45,7 @@ def k_shot_soft_sampling(k, mapping, seed):
                     for label in labels_to_be_considered:
                         count[label] += 1
 
-                    if all([c >= min(1, lb) for c, lb in zip(count.values(), lower_bounds.values())]):
+                    if all([c >= min(c, lb) for c, lb in zip(count.values(), lower_bounds.values())]):
                         completed = True
                         break
 
