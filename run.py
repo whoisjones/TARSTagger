@@ -18,6 +18,8 @@ def run_train(args):
             tars_zeroshot(args, run)
         elif args.experiment == "tars_cross_lingual_pretrain":
             tars_cross_lingual_pretrain(args, run)
+        elif args.experiment == "tars_cross_lingual_kshot":
+            tars_cross_lingual_kshot(args, run)
         else:
             raise ValueError(f"Unknown experiment: {args.experiment}")
 

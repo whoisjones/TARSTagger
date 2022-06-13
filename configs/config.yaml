@@ -4,19 +4,19 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: pretrained_models/ontonotes_arabic15
-experiment: tars_cross_lingual_pretrain
+output_dir: pretrained_models/ontonotes_AB_IOscheme
+experiment: tars_pretain_IOscheme
 
 runs: 1
 #set_seed: False
 final_test: True
 
-language_model: xlm-roberta-large
-corpus: arabic_15
+language_model: bert-base-cased
+corpus: ontonotes_AB
 save_model: True
-train_batch_size: 16
-eval_batch_size: 16
-lr: 5e-6
+train_batch_size: 8
+eval_batch_size: 8
+lr: 5e-5
 epochs: 10
 
 k: 2

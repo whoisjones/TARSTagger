@@ -8,7 +8,7 @@ def make_tars_datasets(
     datasets: list, tokenizer, index2tag, org_tag2tars_label, tars_tag2id, num_negatives
 ):
     """
-
+    transform a dataset into TARS format.
     :param datasets:
     :param tokenizer:
     :param index2tag:
