@@ -17,7 +17,7 @@ from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 from src.utils import k_shot_sampling
 
 
-def tars_kshot(args, run):
+def tars_IOscheme_kshot(args, run):
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"

@@ -14,7 +14,7 @@ from seqeval.metrics import classification_report, f1_score
 from src.corpora import load_corpus, split_dataset
 from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 
-def tars_pretrain_IOscheme(args, run):
+def tars_IOscheme_pretrain(args, run):
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"

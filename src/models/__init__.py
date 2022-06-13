@@ -7,4 +7,6 @@ from .tars_zeroshot import tars_zeroshot
 from .tars_cross_lingual_pretrain import tars_cross_lingual_pretrain
 from .tars_cross_lingual_kshot import tars_cross_lingual_kshot
 from .tars_cross_lingual_zeroshot import tars_cross_lingual_zeroshot
-from .tars_IOscheme_pretrain import tars_pretrain_IOscheme
+from .tars_IOscheme_pretrain import tars_IOscheme_pretrain
+from .tars_IOscheme_kshot import tars_IOscheme_kshot
+from .tars_IOscheme_zeroshot import tars_IOscheme_zeroshot

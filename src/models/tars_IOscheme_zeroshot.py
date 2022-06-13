@@ -14,7 +14,7 @@ from src.corpora import load_corpus, split_dataset, load_label_id_mapping
 from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 
 
-def tars_zeroshot(args, run):
+def tars_IOscheme_zeroshot(args, run):
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
