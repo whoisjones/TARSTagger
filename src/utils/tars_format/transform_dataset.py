@@ -115,8 +115,11 @@ def _make_tars_dataset(
                 negative_samples = list(
                     all_tars_labels.symmetric_difference(set(tars_labels))
                 )
-                if len(negative_samples) > 0 and num_negatives == "one":
-                    negative_label = random.sample(negative_samples, 1).pop()
+                if len(negative_samples) > 0:
+                    if num_negatives == "two" and len(negative_samples) > 1:
+                        negative_label = random.sample(negative_samples, 2).pop()
+                    else:
+                        negative_label = random.sample(negative_samples, 1).pop()
                     tars_label_prefix = negative_label.split() + [tokenizer.sep_token]
                     tars_tokens = tars_label_prefix + original_tokens
                     filtered_tars_tags = [
