@@ -4,24 +4,24 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: validation_1neg_A
-experiment: tars_kshot
+output_dir: xx
+experiment: tars_pretrain
 
-runs: 20
+runs: 1
 #set_seed: False
 final_test: True
 
-language_model: pretrained_models/ontonotesBC_1negative/run0
-corpus: ontonotes_A
+language_model: bert-base-cased
+corpus: ontonotes_AB
 save_model: True
-train_batch_size: 4
+train_batch_size: 32
 eval_batch_size: 32
 lr: 5e-5
-epochs: 50
+epochs: 10
 
-k: 1
+k: 5
 sampling_mode: soft
 reuse_decoder_weights: False
 reuse_corpus_for_weights: conll
 
-num_negatives: all
+num_negatives: two
