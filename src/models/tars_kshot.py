@@ -1,4 +1,6 @@
 import json
+
+from prettytable import PrettyTable
 from tqdm import tqdm
 import random
 
@@ -207,6 +209,14 @@ def tars_kshot(args, run):
     results = classification_report(y_true, y_pred)
 
     print(results)
+
+    table = PrettyTable(["Parameter", "Value"])
+
+    for parameter, value in args.items():
+        table.add_row([parameter, value])
+
+    with open(f"{output_dir}/kshot_config.txt", "w+") as f:
+        f.write(str(table))
 
     train_label_count["indices"] = train_kshot_indices
     train_label_count["number examples"] = len(set(train_kshot_indices))
