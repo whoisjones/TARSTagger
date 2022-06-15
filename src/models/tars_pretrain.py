@@ -1,5 +1,3 @@
-import argparse
-
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForTokenClassification
@@ -197,5 +195,5 @@ def tars_pretrain(args, run):
 
         print(results)
 
-        with open(f"{args.output_dir}/results.txt", "w+") as f:
+        with open(f"{output_dir}/results.txt", "w+") as f:
             f.write(results)

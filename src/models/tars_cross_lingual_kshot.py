@@ -1,8 +1,7 @@
-import argparse
-import os
+import json
 from tqdm import tqdm
 
-from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassification
+from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
@@ -36,8 +35,8 @@ def tars_cross_lingual_kshot(args, run):
     label_id_mapping_train = load_label_id_mapping(train_dataset, index2tag)
     label_id_mapping_validation = load_label_id_mapping(validation_dataset, index2tag)
 
-    train_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
-    validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
+    train_kshot_indices, train_label_count = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
+    validation_kshot_indices, val_label_count = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
 
     kshot_train_dataset = train_dataset.filter(lambda example: example["id"] in train_kshot_indices)
     kshot_validation_dataset = validation_dataset.filter(lambda example: example["id"] in validation_kshot_indices)
@@ -203,6 +202,16 @@ def tars_cross_lingual_kshot(args, run):
     results = classification_report(y_true, y_pred)
 
     print(results)
+
+    train_label_count["indices"] = train_kshot_indices
+    train_label_count["number examples"] = len(set(train_kshot_indices))
+    with open(f"{output_dir}/support_set.json", "w+") as f:
+        json.dump(train_label_count, f, indent=2)
+
+    val_label_count["indices"] = validation_kshot_indices
+    val_label_count["number examples"] = len(set(validation_kshot_indices))
+    with open(f"{output_dir}/validation_set.json", "w+") as f:
+        json.dump(val_label_count, f, indent=2)
 
     with open(f"{output_dir}/results.txt", "w+") as f:
         f.write(results)

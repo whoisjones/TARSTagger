@@ -49,7 +49,7 @@ def k_shot_soft_sampling(k, mapping, seed):
                         completed = True
                         break
 
-    return k_shot_indices
+    return k_shot_indices, count
 
 
 def k_shot_strict_sampling(k, mapping, seed):

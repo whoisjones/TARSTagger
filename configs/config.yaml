@@ -4,7 +4,7 @@ config: configs/config.yaml
 cuda: True
 cuda_devices: "1"
 
-output_dir: xx
+output_dir: pretrained_models/ontonotesBC_2negatives
 experiment: tars_pretrain
 
 runs: 1
@@ -12,7 +12,7 @@ runs: 1
 final_test: True
 
 language_model: bert-base-cased
-corpus: ontonotes_AB
+corpus: ontonotes_BC
 save_model: True
 train_batch_size: 32
 eval_batch_size: 32
