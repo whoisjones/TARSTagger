@@ -15,10 +15,10 @@ from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 
 def tars_pretrain(args, run):
 
-    random.seed(run)
-    np.random.seed(run)
-    torch.manual_seed(run)
-    torch.cuda.manual_seed_all(run)
+    random.seed(run + 42)
+    np.random.seed(run + 42)
+    torch.manual_seed(run + 42)
+    torch.cuda.manual_seed_all(run + 42)
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"

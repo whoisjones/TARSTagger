@@ -19,10 +19,10 @@ from src.utils import k_shot_sampling
 
 def tars_kshot(args, run):
 
-    random.seed(run)
-    np.random.seed(run)
-    torch.manual_seed(run)
-    torch.cuda.manual_seed_all(run)
+    random.seed(run + 171)
+    np.random.seed(run + 171)
+    torch.manual_seed(run + 171)
+    torch.cuda.manual_seed_all(run + 171)
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
