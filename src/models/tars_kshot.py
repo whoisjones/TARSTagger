@@ -1,5 +1,6 @@
 import json
 from tqdm import tqdm
+import random
 
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import Trainer, TrainingArguments
@@ -17,6 +18,11 @@ from src.utils import k_shot_sampling
 
 
 def tars_kshot(args, run):
+
+    random.seed(run)
+    np.random.seed(run)
+    torch.manual_seed(run)
+    torch.cuda.manual_seed_all(run)
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
