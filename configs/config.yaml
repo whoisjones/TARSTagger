@@ -3,15 +3,15 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: 2neg0neg/C1
+output_dir: B
 experiment: tars_kshot
 
 runs: 5
 final_test: True
 
-language_model: pretrained_models/AB2/run1
-corpus: ontonotes_C
-save_model: True
+language_model: pretrained_models/AC0
+corpus: ontonotes_B
+save_model: False
 train_batch_size: 4
 eval_batch_size: 32
 lr: 5e-5

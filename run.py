@@ -28,6 +28,8 @@ def run_train(args):
             tars_IOscheme_kshot(args, run)
         elif args.experiment == "tars_IOscheme_zeroshot":
             tars_IOscheme_zeroshot(args, run)
+        elif args.experiment == "eval_kshot":
+            eval_kshot(args, run)
         else:
             raise ValueError(f"Unknown experiment: {args.experiment}")
 

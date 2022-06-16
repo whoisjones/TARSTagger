@@ -10,3 +10,4 @@ from .tars_cross_lingual_zeroshot import tars_cross_lingual_zeroshot
 from .tars_IOscheme_pretrain import tars_IOscheme_pretrain
 from .tars_IOscheme_kshot import tars_IOscheme_kshot
 from .tars_IOscheme_zeroshot import tars_IOscheme_zeroshot
+from .eval_kshot import eval_kshot
