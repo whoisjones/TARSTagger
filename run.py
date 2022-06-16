@@ -3,7 +3,7 @@ from src.models import *
 
 
 def run_train(args):
-    for run in range(args.runs):
+    for run in range(1, 1 + args.runs):
         if args.experiment == "baseline_pretrain":
             baseline_pretrain(args, run)
         elif args.experiment == "baseline_kshot":

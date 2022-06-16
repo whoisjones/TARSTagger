@@ -21,10 +21,10 @@ from src.utils import k_shot_sampling
 
 def tars_kshot(args, run):
 
-    random.seed(run + 171)
-    np.random.seed(run + 171)
-    torch.manual_seed(run + 171)
-    torch.cuda.manual_seed_all(run + 171)
+    random.seed(run)
+    np.random.seed(run)
+    torch.manual_seed(run)
+    torch.cuda.manual_seed_all(run)
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
@@ -212,7 +212,7 @@ def tars_kshot(args, run):
 
     table = PrettyTable(["Parameter", "Value"])
 
-    for parameter, value in args.items():
+    for parameter, value in args.__dict__.items():
         table.add_row([parameter, value])
 
     with open(f"{output_dir}/kshot_config.txt", "w+") as f:
