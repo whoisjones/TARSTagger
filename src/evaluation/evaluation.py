@@ -25,6 +25,8 @@ def evaluate(directory):
           f"weigh std: {round(np.std(weighted) * 100, 2)} \n"
           )
 
+
+
 def evaluate_to_latex():
     directories = list(filter(lambda x: "shot" in x, os.listdir("resources")))
     directories = sorted(directories, key=lambda x: (x.split("_")[0], x.split("_")[1], int(re.findall(r'\d+', x.split("_")[-1]).pop())))

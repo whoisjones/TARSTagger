@@ -3,20 +3,20 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: pretrained_models/AC2
-experiment: tars_pretrain
+output_dir: 2neg0neg/C1
+experiment: tars_kshot
 
-runs: 4
+runs: 5
 final_test: True
 
-language_model: bert-base-cased
-corpus: ontonotes_AC
+language_model: pretrained_models/AB2/run1
+corpus: ontonotes_C
 save_model: True
-train_batch_size: 64
-eval_batch_size: 64
+train_batch_size: 4
+eval_batch_size: 32
 lr: 5e-5
-epochs: 10
-num_negatives: two
+epochs: 30
+num_negatives: none
 
 k: 1
 sampling_mode: soft
