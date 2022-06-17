@@ -53,7 +53,7 @@ def eval_kshot(args, run):
             else:
                 raise ValueError("unknown negatives.")
 
-            exp = f"{pretrain_negatives}neg{kshot_negatives}neg"
+            exp = f"tag_extension_full/{pretrain_negatives}neg{kshot_negatives}neg"
             output_dir = f"{exp}/{args.output_dir}{model_run[-1]}_{args.k}shot/run{run}"
             language_model = f"{args.language_model}/{model_run}"
 

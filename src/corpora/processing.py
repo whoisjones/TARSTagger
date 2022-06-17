@@ -118,7 +118,12 @@ def _preprocess_tagset_extension(**config):
 
     config["dataset"]["train"] = config["dataset"]["train"].filter(lambda example: all([elem in config["tags"].names for elem in [_full_index2tag.get(x) for x in example["ner_tags"]]]))
     config["dataset"]["validation"] = config["dataset"]["validation"].filter(lambda example: all([elem in config["tags"].names for elem in [_full_index2tag.get(x) for x in example["ner_tags"]]]))
-    config["dataset"]["test"] = config["dataset"]["test"].filter(lambda example: all([elem in config["tags"].names for elem in [_full_index2tag.get(x) for x in example["ner_tags"]]]))
+
+    def mask_labels(example):
+        example["ner_tags"] = [x if x in config["tags"].names else "O" for x in example["ner_tags"]]
+        return example
+
+    config["dataset"]["test"] = config["dataset"]["test"].map(mask_labels)
 
     return config
 

@@ -3,20 +3,20 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: FI
-experiment: eval_crossling_kshot
+output_dir: C
+experiment: eval_kshot
 
 runs: 5
 final_test: True
 
-language_model: pretrained_models/CONLL2NEG
-corpus: finnish
+language_model: pretrained_models/AB0
+corpus: ontonotes_C
 save_model: False
 train_batch_size: 4
 eval_batch_size: 32
-lr: 5e-6
+lr: 5e-4
 epochs: 30
-num_negatives: all
+num_negatives: one
 
 k: 1
 sampling_mode: soft
