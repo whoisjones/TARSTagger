@@ -9,16 +9,16 @@ experiment: eval_kshot
 runs: 5
 final_test: True
 
-language_model: pretrained_models/AB0
+language_model: pretrained_models/AB2
 corpus: ontonotes_C
 save_model: False
 train_batch_size: 4
 eval_batch_size: 32
-lr: 5e-4
+lr: 5e-5
 epochs: 30
 num_negatives: one
 
-k: 1
+k: 5
 sampling_mode: soft
 reuse_decoder_weights: False
 reuse_corpus_for_weights: conll
