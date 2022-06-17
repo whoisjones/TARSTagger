@@ -3,18 +3,18 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: EN
+output_dir: FI
 experiment: eval_crossling_kshot
 
 runs: 5
 final_test: True
 
 language_model: pretrained_models/CONLL2NEG
-corpus: ontonotes
+corpus: finnish
 save_model: False
 train_batch_size: 4
 eval_batch_size: 32
-lr: 5e-5
+lr: 5e-6
 epochs: 30
 num_negatives: all
 

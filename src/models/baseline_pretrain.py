@@ -2,6 +2,7 @@ from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassificat
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
+import random
 import torch
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
@@ -11,6 +12,11 @@ from src.utils import tokenize_and_align_labels
 
 
 def baseline_pretrain(args, run):
+
+    random.seed(run + 42)
+    np.random.seed(run + 42)
+    torch.manual_seed(run + 42)
+    torch.cuda.manual_seed_all(run + 42)
 
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
     output_dir = f"{args.output_dir}/run{run}"

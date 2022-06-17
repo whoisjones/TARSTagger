@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 
+import random
 import torch
 import numpy as np
 from seqeval.metrics import classification_report, f1_score
@@ -11,6 +12,11 @@ from src.utils import tokenize_and_align_labels, k_shot_sampling
 
 
 def baseline_kshot(args, run):
+
+    random.seed(run)
+    np.random.seed(run)
+    torch.manual_seed(run)
+    torch.cuda.manual_seed_all(run)
 
     # set cuda device
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
