@@ -12,3 +12,4 @@ from .tars_IOscheme_kshot import tars_IOscheme_kshot
 from .tars_IOscheme_zeroshot import tars_IOscheme_zeroshot
 from .eval_kshot import eval_kshot
 from .eval_crossling_kshot import eval_crossling_kshot
+from .eval_crossling_baseline_kshot import eval_crossling_baseline_kshot

@@ -32,6 +32,8 @@ def run_train(args):
             eval_kshot(args, run)
         elif args.experiment  == "eval_crossling_kshot":
             eval_crossling_kshot(args, run)
+        elif args.experiment == "eval_crossling_baseline_kshot":
+            eval_crossling_baseline_kshot(args, run)
         else:
             raise ValueError(f"Unknown experiment: {args.experiment}")
 
