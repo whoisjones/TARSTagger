@@ -3,14 +3,14 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: ZH
-experiment: eval_crossling_kshot
+output_dir: FI
+experiment: eval_crossling_baseline_kshot
 
 runs: 5
 final_test: True
 
-language_model: pretrained_models/CONLL2NEG
-corpus: chinese
+language_model: pretrained_models/BASELINE
+corpus: finnish
 save_model: False
 train_batch_size: 4
 eval_batch_size: 32
@@ -20,7 +20,7 @@ num_negatives: all
 
 k: 5
 sampling_mode: soft
-reuse_decoder_weights: False
+reuse_decoder_weights: True
 reuse_corpus_for_weights: conll
 
 

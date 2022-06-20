@@ -1,11 +1,12 @@
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
-
+import json
 import random
 import torch
 import numpy as np
 import os
+from prettytable import PrettyTable
 from seqeval.metrics import classification_report, f1_score
 
 from src.corpora import load_corpus, split_dataset, load_label_id_mapping
@@ -56,8 +57,8 @@ def eval_crossling_baseline_kshot(args, run):
             model.classifier = few_shot_classifier.to(device)
             model.num_labels = tags.num_classes
 
-            train_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
-            validation_kshot_indices = k_shot_sampling(k=args.k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
+            train_kshot_indices, train_label_count = k_shot_sampling(k=k, mapping=label_id_mapping_train, seed=run, mode=args.sampling_mode)
+            validation_kshot_indices, val_label_count = k_shot_sampling(k=k, mapping=label_id_mapping_validation, seed=run, mode=args.sampling_mode)
 
             train_dataset, validation_dataset, test_dataset = split_dataset(tokenized_dataset)
             train_dataset = train_dataset.filter(lambda example: example["id"] in train_kshot_indices)
@@ -121,3 +122,21 @@ def eval_crossling_baseline_kshot(args, run):
             predictions, labels, metrics = trainer.predict(test_dataset, metric_key_prefix="predict")
             trainer.log_metrics("predict", metrics)
             trainer.save_metrics("predict", metrics)
+
+            table = PrettyTable(["Parameter", "Value"])
+
+            for parameter, value in args.__dict__.items():
+                table.add_row([parameter, value])
+
+            with open(f"{output_dir}/kshot_config.txt", "w+") as f:
+                f.write(str(table))
+
+            train_label_count["indices"] = train_kshot_indices
+            train_label_count["number examples"] = len(set(train_kshot_indices))
+            with open(f"{output_dir}/support_set.json", "w+") as f:
+                json.dump(train_label_count, f, indent=2)
+
+            val_label_count["indices"] = validation_kshot_indices
+            val_label_count["number examples"] = len(set(validation_kshot_indices))
+            with open(f"{output_dir}/validation_set.json", "w+") as f:
+                json.dump(val_label_count, f, indent=2)
