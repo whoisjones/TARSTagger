@@ -24,7 +24,7 @@ def eval_crossling_kshot(args, run):
 
     for model_run in os.listdir(args.language_model):
 
-        for k in [16, 32]:
+        for k in [1]:
 
             random.seed(run)
             np.random.seed(run)
