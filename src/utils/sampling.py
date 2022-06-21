@@ -9,7 +9,7 @@ def k_shot_sampling(k, mapping, seed, mode):
         raise ValueError(f"Unknown sampling strategy: {mode}.")
 
 def k_shot_soft_sampling(k, mapping, seed):
-    sorted_mapping = {key: val for key, val in sorted(mapping.items(), key=lambda item: len(item[1]))}
+    sorted_mapping = {key: val for key, val in sorted(mapping.items(), key=lambda item: (item[0][0], -len(item[1])), reverse=True)}
     count = {label: 0 for label in mapping.keys()}
     lower_bounds = {k: len(v) for k, v in mapping.items()}
     k_shot_indices = []
@@ -36,16 +36,16 @@ def k_shot_soft_sampling(k, mapping, seed):
                     for label in labels_to_be_considered:
                         count[label] += 1
 
-                    if all([c >= min(k, lb) for c, lb in zip(count.values(), lower_bounds.values())]):
+                    if all([c >= min(k, lb) for c, lb in zip({k:v for k,v in count.items() if k.startswith("B")}.values(), {k:v for k,v in lower_bounds.items() if k.startswith("B")}.values())]):
                         completed = True
                         break
 
-                elif count[label_key] < 2*k and any([True if count[label] < k else False for label in labels_to_be_considered]) and sentence_id not in k_shot_indices:
+                elif all(count[_label] < 2*k for _label in labels_to_be_considered) and any([True if count[label] < k else False for label in labels_to_be_considered]) and sentence_id not in k_shot_indices:
                     k_shot_indices.append(sentence_id)
                     for label in labels_to_be_considered:
                         count[label] += 1
 
-                    if all([c >= min(k, lb) for c, lb in zip(count.values(), lower_bounds.values())]):
+                    if all([c >= min(k, lb) for c, lb in zip({k:v for k,v in count.items() if k.startswith("B")}.values(), {k:v for k,v in lower_bounds.items() if k.startswith("B")}.values())]):
                         completed = True
                         break
 

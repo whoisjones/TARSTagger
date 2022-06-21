@@ -68,18 +68,22 @@ def evaluate(directory):
     micro_f1 = []
     macro_f1 = []
     weighted = []
+    weighted2 = []
     for run in os.listdir(directory):
         with open(f"{directory}/{run}/results.txt") as f:
             for line in f.readlines():
-                if "micro avg" in line:
+                if "LANGUAGE" in line:
                     micro_f1.append(float(line.split()[-2]))
-                if "macro avg" in line:
+                if "GPE" in line:
                     macro_f1.append(float(line.split()[-2]))
-                if "weighted avg" in line:
+                if "PERCENT" in line:
                     weighted.append(float(line.split()[-2]))
+                if "TIME" in line:
+                    weighted2.append(float(line.split()[-2]))
     return (round(np.average(micro_f1) * 100, 2), round(np.std(micro_f1) * 100, 2),
             round(np.average(macro_f1) * 100, 2), round(np.std(macro_f1) * 100, 2),
-            round(np.average(weighted) * 100, 2), round(np.std(weighted) * 100, 2))
+            round(np.average(weighted) * 100, 2), round(np.std(weighted) * 100, 2),
+            round(np.average(weighted2) * 100, 2), round(np.std(weighted2) * 100, 2))
 
 
 

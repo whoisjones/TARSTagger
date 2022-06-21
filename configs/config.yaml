@@ -3,14 +3,14 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: FI
-experiment: eval_crossling_baseline_kshot
+output_dir: test
+experiment: tars_kshot
 
-runs: 5
+runs: 1
 final_test: True
 
-language_model: pretrained_models/BASELINE
-corpus: finnish
+language_model: pretrained_models/CONLL2NEG/run0
+corpus: ontonotes
 save_model: False
 train_batch_size: 4
 eval_batch_size: 32
@@ -18,7 +18,7 @@ lr: 5e-6
 epochs: 10
 num_negatives: all
 
-k: 5
+k: 32
 sampling_mode: soft
 reuse_decoder_weights: True
 reuse_corpus_for_weights: conll
