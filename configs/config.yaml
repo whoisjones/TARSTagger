@@ -3,14 +3,14 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: test
-experiment: tars_kshot
+output_dir: ZH
+experiment: eval_crossling_kshot
 
-runs: 1
+runs: 5
 final_test: True
 
-language_model: pretrained_models/CONLL2NEG/run0
-corpus: ontonotes
+language_model: pretrained_models/CONLL2NEG
+corpus: chinese
 save_model: False
 train_batch_size: 4
 eval_batch_size: 32

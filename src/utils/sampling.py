@@ -17,7 +17,11 @@ def k_shot_soft_sampling(k, mapping, seed):
     random.seed(seed)
 
     completed = False
+    idx = 0
     while not completed:
+
+        if idx == 200:
+            break
 
         for label_key, sentence_ids in sorted_mapping.items():
 
@@ -48,6 +52,7 @@ def k_shot_soft_sampling(k, mapping, seed):
                     if all([c >= min(k, lb) for c, lb in zip({k:v for k,v in count.items() if k.startswith("B")}.values(), {k:v for k,v in lower_bounds.items() if k.startswith("B")}.values())]):
                         completed = True
                         break
+        idx += 1
 
     return k_shot_indices, count
 
