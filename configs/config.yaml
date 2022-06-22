@@ -4,16 +4,16 @@ config: configs/config.yaml
 cuda: True
 
 output_dir: AR
-experiment: tars_zeroshot
+experiment: eval_crossling_kshot
 
-runs: 1
+runs: 5
 final_test: True
 
 language_model: pretrained_models/CONLL2NEG
 corpus: arabic
 save_model: False
 train_batch_size: 4
-eval_batch_size: 32
+eval_batch_size: 64
 lr: 5e-6
 epochs: 10
 num_negatives: all

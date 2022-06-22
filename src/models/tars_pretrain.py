@@ -11,7 +11,7 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from src.corpora import load_corpus, split_dataset
-from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
+from src.utils.tars_format import make_tars_datasets, load_tars_alphabetical_label_mapping
 
 def tars_pretrain(args, run):
 
@@ -31,7 +31,7 @@ def tars_pretrain(args, run):
     # tars tags
     tars_tag2id = {'O': 0, 'B-': 1, 'I-': 2}
     tars_id2tag = {v: k for k, v in tars_tag2id.items()}
-    org_tag2tars_label, tars_label2org_tag = load_tars_label_mapping(tags)
+    org_tag2tars_label, tars_label2org_tag = load_tars_alphabetical_label_mapping(tags, args.corpus)
 
     # model
     config = AutoConfig.from_pretrained(args.language_model, num_labels=len(tars_tag2id),

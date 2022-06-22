@@ -1,2 +1,2 @@
 from .tokenization import tokenize_and_align_tars_labels
-from .transform_dataset import make_tars_datasets, load_tars_label_mapping, load_tars_cross_lingual_label_mapping
+from .transform_dataset import make_tars_datasets, load_tars_label_mapping, load_tars_cross_lingual_label_mapping, load_tars_alphabetical_label_mapping

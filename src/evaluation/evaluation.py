@@ -6,7 +6,7 @@ import pandas as pd
 
 
 def total_eval(directory):
-    for group in ["FI"]:
+    for group in ["ZH"]:
         all_shots = list(filter(lambda x: x.startswith(group), os.listdir(directory)))
         zero_shots = list(filter(lambda k: k.endswith("_0shot"), all_shots))
         one_shots = list(filter(lambda k: k.endswith("_1shot"), all_shots))

@@ -16,7 +16,7 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from src.corpora import load_corpus, split_dataset, load_label_id_mapping
-from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
+from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping, load_tars_cross_lingual_label_mapping
 from src.utils import k_shot_sampling
 
 
@@ -24,7 +24,7 @@ def eval_crossling_kshot(args, run):
 
     for model_run in os.listdir(args.language_model):
 
-        for k in [1]:
+        for k in [1,2,4]:
 
             random.seed(run)
             np.random.seed(run)
@@ -34,7 +34,7 @@ def eval_crossling_kshot(args, run):
             # set cuda device
             device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
 
-            output_dir = f"cross_lingual_transfer/{args.output_dir}{model_run[-1]}_{k}shot/run{run}"
+            output_dir = f"ablation/{args.output_dir}{model_run[-1]}_{k}shot/run{run}"
             language_model = f"{args.language_model}/{model_run}"
 
             tokenizer = AutoTokenizer.from_pretrained(language_model)
@@ -45,7 +45,7 @@ def eval_crossling_kshot(args, run):
             train_dataset, validation_dataset, test_dataset = split_dataset(dataset)
             tars_tag2id = {'O': 0, 'B-': 1, 'I-': 2}
             tars_id2tag = {v: k for k, v in tars_tag2id.items()}
-            org_tag2tars_label, tars_label2org_tag = load_tars_label_mapping(tags)
+            org_tag2tars_label, tars_label2org_tag = load_tars_cross_lingual_label_mapping(tags, args.corpus)
 
             label_id_mapping_train = load_label_id_mapping(train_dataset, index2tag)
             label_id_mapping_validation = load_label_id_mapping(validation_dataset, index2tag)
