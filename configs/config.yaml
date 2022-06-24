@@ -3,7 +3,7 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: FI
+output_dir: AS
 experiment: eval_crossling_kshot
 
 runs: 5
