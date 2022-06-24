@@ -16,21 +16,7 @@ def run_train(args):
             tars_kshot(args, run)
         elif args.experiment == "tars_zeroshot":
             tars_zeroshot(args, run)
-        elif args.experiment == "tars_cross_lingual_pretrain":
-            tars_cross_lingual_pretrain(args, run)
-        elif args.experiment == "tars_cross_lingual_kshot":
-            tars_cross_lingual_kshot(args, run)
-        elif args.experiment == "tars_cross_lingual_zeroshot":
-            tars_cross_lingual_zeroshot(args, run)
-        elif args.experiment == "tars_IOscheme_pretrain":
-            tars_IOscheme_pretrain(args, run)
-        elif args.experiment == "tars_IOscheme_kshot":
-            tars_IOscheme_kshot(args, run)
-        elif args.experiment == "tars_IOscheme_zeroshot":
-            tars_IOscheme_zeroshot(args, run)
-        elif args.experiment == "eval_kshot":
-            eval_kshot(args, run)
-        elif args.experiment  == "eval_crossling_kshot":
+        elif args.experiment == "eval_crossling_kshot":
             eval_crossling_kshot(args, run)
         elif args.experiment == "eval_crossling_baseline_kshot":
             eval_crossling_baseline_kshot(args, run)

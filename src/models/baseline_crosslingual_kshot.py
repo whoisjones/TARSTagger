@@ -17,7 +17,7 @@ def eval_crossling_baseline_kshot(args, run):
 
     for model_run in os.listdir(args.language_model):
 
-        for k in [2,4,8]:
+        for k in [1,2,4,8,16,32]:
 
             random.seed(run)
             np.random.seed(run)
@@ -27,7 +27,7 @@ def eval_crossling_baseline_kshot(args, run):
             # set cuda device
             device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
 
-            output_dir = f"cross_lingual_baseline/{args.output_dir}{model_run[-1]}_{k}shot/run{run}"
+            output_dir = f"cross_lingual_baseline_kshot/{args.output_dir}{model_run[-1]}_{k}shot/run{run}"
             language_model = f"{args.language_model}/{model_run}"
 
             tokenizer = AutoTokenizer.from_pretrained(language_model)

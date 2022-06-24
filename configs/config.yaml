@@ -3,14 +3,14 @@
 config: configs/config.yaml
 cuda: True
 
-output_dir: AR
+output_dir: FI
 experiment: eval_crossling_kshot
 
 runs: 5
 final_test: True
 
-language_model: pretrained_models/CONLL2NEG
-corpus: arabic
+language_model: bert-base-cased
+corpus: finnish
 save_model: False
 train_batch_size: 4
 eval_batch_size: 64

@@ -15,7 +15,9 @@ from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping
 
 
 def tars_zeroshot(args, run):
+
     for model_run in os.listdir(args.language_model):
+
         random.seed(run)
         np.random.seed(run)
         torch.manual_seed(run)

@@ -11,7 +11,7 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from src.corpora import load_corpus, split_dataset
-from src.utils.tars_format import make_tars_datasets, load_tars_alphabetical_label_mapping
+from src.utils.tars_format import make_tars_datasets, load_tars_unprocessed_label_mapping
 
 def tars_pretrain(args, run):
 
@@ -31,7 +31,7 @@ def tars_pretrain(args, run):
     # tars tags
     tars_tag2id = {'O': 0, 'B-': 1, 'I-': 2}
     tars_id2tag = {v: k for k, v in tars_tag2id.items()}
-    org_tag2tars_label, tars_label2org_tag = load_tars_alphabetical_label_mapping(tags, args.corpus)
+    org_tag2tars_label, tars_label2org_tag = load_tars_unprocessed_label_mapping(tags)
 
     # model
     config = AutoConfig.from_pretrained(args.language_model, num_labels=len(tars_tag2id),
@@ -156,7 +156,10 @@ def tars_pretrain(args, run):
         def evaluate(predictions_df):
             predictions, labels = [], []
             for idx, tars_predictions in predictions_df:
-                logits_per_tars_label = torch.stack(tars_predictions["logits"].to_list()).cpu().detach().numpy()
+                raw_preds = tars_predictions["logits"].to_list()
+                truncate_upper_bound = min([p.shape[0] for p in raw_preds])
+                truncated_preds = [p[:truncate_upper_bound] for p in raw_preds]
+                logits_per_tars_label = torch.stack(truncated_preds).cpu().detach().numpy()
                 pred_tars_labels = np.argmax(logits_per_tars_label, axis=2)
                 score_tars_label = np.max(logits_per_tars_label, axis=2)
                 current_preds = []
@@ -174,7 +177,8 @@ def tars_pretrain(args, run):
                             tars_tag = pred_tars_labels[:, col_idx][nonzero_entries][0]
                             tars_label = tars_predictions["tars_labels"].iloc[nonzero_entries].iloc[0]
                         else:
-                            id_from_max_score = nonzero_entries[0][np.argmax(score_tars_label[:, col_idx][nonzero_entries])]
+                            id_from_max_score = nonzero_entries[0][
+                                np.argmax(score_tars_label[:, col_idx][nonzero_entries])]
                             tars_tag = pred_tars_labels[id_from_max_score, col_idx]
                             tars_label = tars_predictions["tars_labels"].iloc[id_from_max_score]
 
@@ -185,8 +189,10 @@ def tars_pretrain(args, run):
                             )
                         )
 
-                assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in tars_predictions["ner_tags"].to_list())
-                current_labels = [index2tag.get(x) for x in tars_predictions["ner_tags"].iloc[0].tolist()]
+                assert all((element == tars_predictions["ner_tags"].to_list()[0]).all() for element in
+                           tars_predictions["ner_tags"].to_list())
+                current_labels = [index2tag.get(x) for x in
+                                  tars_predictions["ner_tags"].iloc[0].tolist()[:truncate_upper_bound]]
 
                 predictions.append(current_preds)
                 labels.append(current_labels)

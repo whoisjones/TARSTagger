@@ -67,8 +67,8 @@ alphabetical_label_name_map = {
     "I-TIME": "Q",
     "B-WORK_OF_ART": "R",
     "I-WORK_OF_ART": "R",
-    "B-PRO": "S",
-    "I-PRO": "S",
+    "B-PRO": "O",
+    "I-PRO": "O",
     "B-DATE": "T",
     "I-DATE": "T",
 }

@@ -16,7 +16,7 @@ import numpy as np
 from seqeval.metrics import classification_report, f1_score
 
 from src.corpora import load_corpus, split_dataset, load_label_id_mapping
-from src.utils.tars_format import make_tars_datasets, load_tars_label_mapping, load_tars_cross_lingual_label_mapping
+from src.utils.tars_format import make_tars_datasets, load_tars_cross_lingual_label_mapping
 from src.utils import k_shot_sampling
 
 
@@ -24,7 +24,7 @@ def eval_crossling_kshot(args, run):
 
     for model_run in os.listdir(args.language_model):
 
-        for k in [1,2,4]:
+        for k in [1,2,4,8,16,32]:
 
             random.seed(run)
             np.random.seed(run)
@@ -34,7 +34,7 @@ def eval_crossling_kshot(args, run):
             # set cuda device
             device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
 
-            output_dir = f"ablation/{args.output_dir}{model_run[-1]}_{k}shot/run{run}"
+            output_dir = f"cross_lingual_tars_kshot/{args.output_dir}{model_run[-1]}_{k}shot/run{run}"
             language_model = f"{args.language_model}/{model_run}"
 
             tokenizer = AutoTokenizer.from_pretrained(language_model)
